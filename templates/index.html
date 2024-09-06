@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEO Analysis Tool</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>SEO Analysis Tool</h1>
+        <div class="input-container">
+            <input type="text" id="url" placeholder="Enter URL to analyze" required>
+            <input type="text" id="keyword" placeholder="Enter keyword" required>
+            <button id="analyze-btn">Analyze</button>
+        </div>
+        <div id="results" class="results-container"></div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
