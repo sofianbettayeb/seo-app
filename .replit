@@ -1,4 +1,4 @@
-modules = ["python-3.11"]
+modules = ["python-3.11", "nodejs-20"]
 
 [nix]
 channel = "stable-24_05"
@@ -15,6 +15,10 @@ author = "agent"
 task = "workflow.run"
 args = "Run Flask App"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Run Node.js Server"
+
 [[workflows.workflow]]
 name = "Run Flask App"
 author = "agent"
@@ -27,9 +31,25 @@ task = "shell.exec"
 args = "python main.py"
 waitForPort = 5000
 
+[[workflows.workflow]]
+name = "Run Node.js Server"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node server.js"
+waitForPort = 3000
+
 [deployment]
 deploymentTarget = "gce"
 run = ["sh", "-c", "python main.py"]
+
+[[ports]]
+localPort = 3000
+externalPort = 3000
 
 [[ports]]
 localPort = 5000
