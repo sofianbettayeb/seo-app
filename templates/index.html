@@ -4,17 +4,51 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SEO Analysis Tool</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/styles.css">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 </head>
 <body>
-    <div class="container">
-        <h1>SEO Analysis Tool</h1>
-        <div class="input-container">
-            <input type="text" id="url" placeholder="Enter URL to analyze" required>
-            <input type="text" id="keyword" placeholder="Enter keyword" required>
-            <button id="analyze-btn">Analyze</button>
-        </div>
-        <div id="results" class="results-container"></div>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-item active"><i class="fas fa-home"></i> Dashboard</div>
+            <div class="sidebar-item"><i class="fas fa-chart-bar"></i> Analytics</div>
+            <div class="sidebar-item"><i class="fas fa-history"></i> History</div>
+            <div class="sidebar-item"><i class="fas fa-cog"></i> Settings</div>
+            <div class="sidebar-item"><i class="fas fa-question-circle"></i> Help</div>
+        </aside>
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="language-selector">
+                    <select>
+                        <option value="en">EN</option>
+                        <option value="es">ES</option>
+                        <option value="fr">FR</option>
+                    </select>
+                </div>
+                <button class="home-button"><i class="fas fa-home"></i> Home</button>
+            </header>
+            <div class="container">
+                <h1>SEO Analysis Tool</h1>
+                <p class="subtitle">Optimize your website's SEO with our powerful analysis tool</p>
+                <section class="input-section">
+                    <div class="input-container">
+                        <div class="input-wrapper">
+                            <i class="fas fa-globe"></i>
+                            <input type="text" id="url" placeholder="Enter URL to analyze" required>
+                        </div>
+                        <div class="input-wrapper">
+                            <i class="fas fa-key"></i>
+                            <input type="text" id="keyword" placeholder="Enter keyword" required>
+                        </div>
+                        <button id="analyze-btn"><i class="fas fa-search"></i> Analyze</button>
+                    </div>
+                </section>
+                <section class="results-section">
+                    <div id="results" class="results-container"></div>
+                </section>
+            </div>
+        </main>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="/js/script.js"></script>
