@@ -45,7 +45,11 @@ waitForPort = 3000
 
 [deployment]
 deploymentTarget = "gce"
-run = ["sh", "-c", "python main.py"]
+run = ["sh", "-c", "node server.js"]
+
+[[ports]]
+localPort = 80
+externalPort = 3001
 
 [[ports]]
 localPort = 3000
