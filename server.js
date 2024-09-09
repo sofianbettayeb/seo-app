@@ -25,7 +25,7 @@ app.post('/analyze', async (req, res) => {
     const html = response.data;
     const $ = cheerio.load(html);
 
-    // Perform SEO analysis (simplified version)
+    // Perform SEO analysis (enhanced version)
     const title = $('title').text();
     const metaDescription = $('meta[name="description"]').attr('content') || '';
     const h1Tags = $('h1').map((i, el) => $(el).text()).get();
@@ -36,6 +36,18 @@ app.post('/analyze', async (req, res) => {
     const keywordInUrl = url.toLowerCase().includes(keyword.toLowerCase());
     const keywordInHeadings = $('h1, h2, h3, h4, h5, h6').text().toLowerCase().includes(keyword.toLowerCase()) ? 1 : 0;
 
+    // Meta SEO analysis
+    const metaTags = $('meta').map((i, el) => ({
+      name: $(el).attr('name') || $(el).attr('property'),
+      content: $(el).attr('content')
+    })).get();
+
+    const openGraphTags = metaTags.filter(tag => tag.name && tag.name.startsWith('og:'));
+    const twitterTags = metaTags.filter(tag => tag.name && tag.name.startsWith('twitter:'));
+
+    const canonicalUrl = $('link[rel="canonical"]').attr('href') || '';
+    const robotsMeta = $('meta[name="robots"]').attr('content') || '';
+
     res.json({
       title,
       meta_description: metaDescription,
@@ -45,7 +57,12 @@ app.post('/analyze', async (req, res) => {
       internal_links: internalLinks,
       external_links: externalLinks,
       keyword_in_url: keywordInUrl,
-      keyword_in_headings: keywordInHeadings
+      keyword_in_headings: keywordInHeadings,
+      meta_tags: metaTags,
+      open_graph_tags: openGraphTags,
+      twitter_tags: twitterTags,
+      canonical_url: canonicalUrl,
+      robots_meta: robotsMeta
     });
   } catch (error) {
     res.status(500).json({ error: 'An error occurred while analyzing the URL' });

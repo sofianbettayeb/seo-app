@@ -2,7 +2,7 @@ function getColorClass(value, thresholds) {
     if (value < thresholds[0]) return 'poor';
     if (value < thresholds[1]) return 'moderate';
     return 'good';
-}
+}    
 
 function getKeywordDensityInfo(density) {
     const colorClass = getColorClass(density, [1, 2.5]);

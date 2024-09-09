@@ -2,12 +2,16 @@ import { getColorClass, getKeywordDensityInfo, getReadabilityInfo, getLinkCountI
 
 function calculateOverallScore(data) {
     let score = 0;
-    if (data.keyword_density >= 1 && data.keyword_density <= 3) score += 20;
-    if (data.readability_score >= 60) score += 20;
-    if (data.internal_links > 0) score += 15;
-    if (data.external_links > 0) score += 15;
-    if (data.keyword_in_url) score += 15;
-    if (data.keyword_in_headings > 0) score += 15;
+    if (data.keyword_density >= 1 && data.keyword_density <= 3) score += 15;
+    if (data.readability_score >= 60) score += 15;
+    if (data.internal_links > 0) score += 10;
+    if (data.external_links > 0) score += 10;
+    if (data.keyword_in_url) score += 10;
+    if (data.keyword_in_headings > 0) score += 10;
+    if (data.meta_description) score += 10;
+    if (data.open_graph_tags.length > 0) score += 10;
+    if (data.twitter_tags.length > 0) score += 5;
+    if (data.canonical_url) score += 5;
     return score;
 }
 
@@ -89,6 +93,30 @@ function displayResults(data) {
                 ${data.h1_tags.map(tag => `<li>${tag}</li>`).join('')}
             </ul>
             <small>H1 tags are crucial for SEO and user experience. Each page should have a unique H1 that accurately describes the page's content.</small>
+        </div>
+        <div class="metric">
+            <h3><i class="fas fa-share-alt"></i> Open Graph Tags</h3>
+            <ul>
+                ${data.open_graph_tags.map(tag => `<li><strong>${tag.name}:</strong> ${tag.content}</li>`).join('')}
+            </ul>
+            <small>Open Graph tags help control how your content appears when shared on social media platforms.</small>
+        </div>
+        <div class="metric">
+            <h3><i class="fab fa-twitter"></i> Twitter Cards</h3>
+            <ul>
+                ${data.twitter_tags.map(tag => `<li><strong>${tag.name}:</strong> ${tag.content}</li>`).join('')}
+            </ul>
+            <small>Twitter Card tags help control how your content appears when shared on Twitter.</small>
+        </div>
+        <div class="metric">
+            <h3><i class="fas fa-link"></i> Canonical URL</h3>
+            <p>${data.canonical_url || 'Not set'}</p>
+            <small>The canonical URL helps prevent duplicate content issues by specifying the preferred version of a web page.</small>
+        </div>
+        <div class="metric">
+            <h3><i class="fas fa-robot"></i> Robots Meta Tag</h3>
+            <p>${data.robots_meta || 'Not set'}</p>
+            <small>The robots meta tag tells search engines how to crawl or index a page.</small>
         </div>
     `;
 
