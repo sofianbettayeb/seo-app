@@ -1,5 +1,6 @@
 import { isValidUrl, showLoading, showError } from './utils.js';
 import { displayResults } from './resultsDisplay.js';
+import { analyzeSEO } from './api.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const analyzeBtn = document.getElementById('analyze-btn');
@@ -22,11 +23,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             showLoading();
-            const response = await axios.post('/analyze', { url, keyword });
-            displayResults(response.data);
+            const results = await analyzeSEO(url, keyword);
+            displayResults(results);
         } catch (error) {
-            showError('An error occurred while analyzing the URL.');
-            console.error('Error:', error);
+            showError(error.message);
         }
     });
 });
