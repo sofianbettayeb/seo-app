@@ -18,7 +18,12 @@ app.get('/', (req, res) => {
 
 // Analyze endpoint
 app.post('/analyze', async (req, res) => {
-  const { url, keyword } = req.body;
+  let { url, keyword } = req.body;
+
+  // Add 'https://' if not present
+  if (!/^https?:\/\//i.test(url)) {
+    url = 'https://' + url;
+  }
 
   try {
     const response = await axios.get(url);

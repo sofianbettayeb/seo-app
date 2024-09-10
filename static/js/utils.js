@@ -1,4 +1,8 @@
 function isValidUrl(string) {
+    // Add 'https://' if not present
+    if (!/^https?:\/\//i.test(string)) {
+        string = 'https://' + string;
+    }
     try {
         new URL(string);
         return true;
