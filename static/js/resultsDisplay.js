@@ -7,11 +7,11 @@ function calculateOverallScore(data) {
     if (data.internal_links > 0) score += 10;
     if (data.external_links > 0) score += 10;
     if (data.keyword_in_url) score += 10;
-    if (data.keyword_in_headings > 0) score += 10;
+    if (data.keyword_in_title) score += 10;
+    if (data.keyword_in_headings.h1 > 0) score += 10;
+    if (data.keyword_in_headings.h2 > 0) score += 5;
+    if (data.keyword_in_headings.h3 > 0) score += 5;
     if (data.meta_description) score += 10;
-    if (data.open_graph_tags.length > 0) score += 10;
-    if (data.twitter_tags.length > 0) score += 5;
-    if (data.canonical_url) score += 5;
     return score;
 }
 
@@ -38,7 +38,10 @@ function displayResults(data) {
     const internalLinksInfo = getLinkCountInfo(data.internal_links, true);
     const externalLinksInfo = getLinkCountInfo(data.external_links, false);
     const keywordInUrlInfo = getKeywordInfo(data.keyword_in_url, 'URL');
-    const keywordInHeadingsInfo = getKeywordInfo(data.keyword_in_headings > 0, 'headings');
+    const keywordInTitleInfo = getKeywordInfo(data.keyword_in_title, 'title');
+    const keywordInH1Info = getKeywordInfo(data.keyword_in_headings.h1 > 0, 'H1');
+    const keywordInH2Info = getKeywordInfo(data.keyword_in_headings.h2 > 0, 'H2');
+    const keywordInH3Info = getKeywordInfo(data.keyword_in_headings.h3 > 0, 'H3');
 
     let resultsHTML = `
         <h2>SEO Analysis Results</h2>
@@ -47,9 +50,11 @@ function displayResults(data) {
             <p>Overall SEO Score</p>
             <p>${overallScoreInfo.explanation}</p>
         </div>
+        ${generateTitleAnalysisHTML(data)}
         ${generateContentAnalysisHTML(data, keywordDensityInfo, readabilityInfo)}
+        ${generateHeadingAnalysisHTML(data)}
         ${generateLinkAnalysisHTML(data, internalLinksInfo, externalLinksInfo)}
-        ${generateKeywordOptimizationHTML(data, keywordInUrlInfo, keywordInHeadingsInfo)}
+        ${generateKeywordOptimizationHTML(data, keywordInUrlInfo, keywordInTitleInfo, keywordInH1Info, keywordInH2Info, keywordInH3Info)}
         ${generateMetaSeoHTML(data)}
     `;
 
@@ -60,15 +65,51 @@ function displayResults(data) {
     }, 100);
 }
 
-function generateContentAnalysisHTML(data, keywordDensityInfo, readabilityInfo) {
+function generateTitleAnalysisHTML(data) {
+    const titleLengthClass = getColorClass(data.title_analysis.length, [30, 60]);
+    const keywordPositionClass = getColorClass(data.title_analysis.keywordPosition, [1, 5]);
     return `
         <div class="seo-section">
-            <h3>Content Analysis</h3>
+            <h3>Title Analysis</h3>
             <div class="metric">
                 <h4><i class="fas fa-heading"></i> Title</h4>
                 <p>${data.title}</p>
                 <small>A good title should be 50-60 characters long and include your main keyword.</small>
             </div>
+            <div class="metric">
+                <h4><i class="fas fa-text-width"></i> Title Length: <span class="${titleLengthClass}">${data.title_analysis.length} characters</span></h4>
+                <p>${getTitleLengthExplanation(data.title_analysis.length)}</p>
+            </div>
+            <div class="metric">
+                <h4><i class="fas fa-key"></i> Keyword in Title: <span class="${data.title_analysis.containsKeyword ? 'good' : 'poor'}">${data.title_analysis.containsKeyword ? 'Yes' : 'No'}</span></h4>
+                <p>${data.title_analysis.containsKeyword ? 'Great! Your keyword is in the title.' : 'Consider including your keyword in the title.'}</p>
+            </div>
+            ${data.title_analysis.containsKeyword ? `
+                <div class="metric">
+                    <h4><i class="fas fa-map-pin"></i> Keyword Position: <span class="${keywordPositionClass}">${data.title_analysis.keywordPosition}</span></h4>
+                    <p>${getKeywordPositionExplanation(data.title_analysis.keywordPosition)}</p>
+                </div>
+            ` : ''}
+        </div>
+    `;
+}
+
+function getTitleLengthExplanation(length) {
+    if (length < 30) return 'Your title is too short. Consider making it longer for better SEO.';
+    if (length > 60) return 'Your title is too long. Try to keep it under 60 characters for optimal display in search results.';
+    return 'Great! Your title length is optimal for SEO.';
+}
+
+function getKeywordPositionExplanation(position) {
+    if (position === 1) return 'Excellent! Your keyword is at the beginning of the title, which is ideal for SEO.';
+    if (position <= 5) return 'Good job! Your keyword is near the beginning of the title, which is good for SEO.';
+    return 'Consider moving your keyword closer to the beginning of the title for better SEO impact.';
+}
+
+function generateContentAnalysisHTML(data, keywordDensityInfo, readabilityInfo) {
+    return `
+        <div class="seo-section">
+            <h3>Content Analysis</h3>
             <div class="metric">
                 <h4><i class="fas fa-percentage"></i> Keyword Density: <span class="${keywordDensityInfo.colorClass}">${data.keyword_density}%</span></h4>
                 <p>${keywordDensityInfo.explanation}</p>
@@ -79,15 +120,47 @@ function generateContentAnalysisHTML(data, keywordDensityInfo, readabilityInfo) 
                 <p>${readabilityInfo.explanation}</p>
                 <small>The readability score indicates how easy it is for people to read your content. A higher score means easier to read.</small>
             </div>
-            <div class="metric">
-                <h4><i class="fas fa-h1"></i> H1 Tags:</h4>
-                <ul>
-                    ${data.h1_tags.map(tag => `<li>${tag}</li>`).join('')}
-                </ul>
-                <small>H1 tags are crucial for SEO and user experience. Each page should have a unique H1 that accurately describes the page's content.</small>
-            </div>
         </div>
     `;
+}
+
+function generateHeadingAnalysisHTML(data) {
+    return `
+        <div class="seo-section">
+            <h3>Heading Analysis</h3>
+            ${generateHeadingTypeAnalysis(data.heading_analysis.h1, 'H1')}
+            ${generateHeadingTypeAnalysis(data.heading_analysis.h2, 'H2')}
+            ${generateHeadingTypeAnalysis(data.heading_analysis.h3, 'H3')}
+        </div>
+    `;
+}
+
+function generateHeadingTypeAnalysis(headingData, headingType) {
+    const headingCountClass = getColorClass(headingData.count, headingType === 'H1' ? [1, 1] : [1, 5]);
+    const keywordUsageClass = getColorClass(headingData.withKeyword, [1, 2]);
+    return `
+        <div class="metric">
+            <h4><i class="fas fa-${headingType.toLowerCase()}"></i> ${headingType} Tags</h4>
+            <p>Count: <span class="${headingCountClass}">${headingData.count}</span></p>
+            <p>With Keyword: <span class="${keywordUsageClass}">${headingData.withKeyword}</span></p>
+            <p>Average Length: ${headingData.averageLength.toFixed(2)} characters</p>
+            <ul>
+                ${headingData.list.map(tag => `<li>${tag}</li>`).join('')}
+            </ul>
+            <small>${getHeadingExplanation(headingType, headingData)}</small>
+        </div>
+    `;
+}
+
+function getHeadingExplanation(headingType, headingData) {
+    let explanation = '';
+    if (headingType === 'H1') {
+        explanation = headingData.count === 1 ? 'Good! You have one H1 tag, which is ideal.' : 'Consider using only one H1 tag per page for better structure.';
+    } else {
+        explanation = headingData.count > 0 ? `Good use of ${headingType} tags for content structure.` : `Consider using ${headingType} tags to better organize your content.`;
+    }
+    explanation += headingData.withKeyword > 0 ? ` Great job including your keyword in ${headingType} tags!` : ` Try to include your keyword in some ${headingType} tags.`;
+    return explanation;
 }
 
 function generateLinkAnalysisHTML(data, internalLinksInfo, externalLinksInfo) {
@@ -108,7 +181,7 @@ function generateLinkAnalysisHTML(data, internalLinksInfo, externalLinksInfo) {
     `;
 }
 
-function generateKeywordOptimizationHTML(data, keywordInUrlInfo, keywordInHeadingsInfo) {
+function generateKeywordOptimizationHTML(data, keywordInUrlInfo, keywordInTitleInfo, keywordInH1Info, keywordInH2Info, keywordInH3Info) {
     return `
         <div class="seo-section">
             <h3>Keyword Optimization</h3>
@@ -118,9 +191,24 @@ function generateKeywordOptimizationHTML(data, keywordInUrlInfo, keywordInHeadin
                 <small>Having your keyword in the URL can help with SEO, but don't force it if it doesn't fit naturally.</small>
             </div>
             <div class="metric">
-                <h4><i class="fas fa-heading"></i> Keyword in Headings: <span class="${keywordInHeadingsInfo.colorClass}">${data.keyword_in_headings}</span></h4>
-                <p>${keywordInHeadingsInfo.explanation}</p>
-                <small>Using your keyword in headings helps search engines understand the structure and topic of your content.</small>
+                <h4><i class="fas fa-heading"></i> Keyword in Title: <span class="${keywordInTitleInfo.colorClass}">${data.keyword_in_title ? 'Yes' : 'No'}</span></h4>
+                <p>${keywordInTitleInfo.explanation}</p>
+                <small>Including your keyword in the title tag is crucial for SEO as it helps search engines understand what your page is about.</small>
+            </div>
+            <div class="metric">
+                <h4><i class="fas fa-h1"></i> Keyword in H1: <span class="${keywordInH1Info.colorClass}">${data.keyword_in_headings.h1}</span></h4>
+                <p>${keywordInH1Info.explanation}</p>
+                <small>Using your keyword in the H1 tag reinforces the topic of your page to search engines and users.</small>
+            </div>
+            <div class="metric">
+                <h4><i class="fas fa-h2"></i> Keyword in H2: <span class="${keywordInH2Info.colorClass}">${data.keyword_in_headings.h2}</span></h4>
+                <p>${keywordInH2Info.explanation}</p>
+                <small>Including your keyword in H2 tags can help with topical relevance and content structure.</small>
+            </div>
+            <div class="metric">
+                <h4><i class="fas fa-h3"></i> Keyword in H3: <span class="${keywordInH3Info.colorClass}">${data.keyword_in_headings.h3}</span></h4>
+                <p>${keywordInH3Info.explanation}</p>
+                <small>Using your keyword in H3 tags can further reinforce the topic of your content.</small>
             </div>
         </div>
     `;

@@ -34,12 +34,33 @@ app.post('/analyze', async (req, res) => {
     const title = $('title').text();
     const metaDescription = $('meta[name="description"]').attr('content') || '';
     const h1Tags = $('h1').map((i, el) => $(el).text()).get();
+    const h2Tags = $('h2').map((i, el) => $(el).text()).get();
+    const h3Tags = $('h3').map((i, el) => $(el).text()).get();
     const keywordDensity = calculateKeywordDensity(html, keyword);
     const readabilityScore = calculateReadabilityScore(html);
     const internalLinks = $('a[href^="/"], a[href^="' + url + '"]').length;
     const externalLinks = $('a[href^="http"]:not([href^="' + url + '"])').length;
     const keywordInUrl = url.toLowerCase().includes(keyword.toLowerCase());
-    const keywordInHeadings = $('h1, h2, h3, h4, h5, h6').text().toLowerCase().includes(keyword.toLowerCase()) ? 1 : 0;
+    const keywordInTitle = title.toLowerCase().includes(keyword.toLowerCase());
+    const keywordInHeadings = {
+      h1: h1Tags.filter(tag => tag.toLowerCase().includes(keyword.toLowerCase())).length,
+      h2: h2Tags.filter(tag => tag.toLowerCase().includes(keyword.toLowerCase())).length,
+      h3: h3Tags.filter(tag => tag.toLowerCase().includes(keyword.toLowerCase())).length
+    };
+
+    // Enhanced title analysis
+    const titleAnalysis = {
+      length: title.length,
+      containsKeyword: keywordInTitle,
+      keywordPosition: keywordInTitle ? title.toLowerCase().indexOf(keyword.toLowerCase()) + 1 : 0,
+    };
+
+    // Enhanced heading analysis
+    const headingAnalysis = {
+      h1: analyzeHeadings(h1Tags, keyword),
+      h2: analyzeHeadings(h2Tags, keyword),
+      h3: analyzeHeadings(h3Tags, keyword)
+    };
 
     // Meta SEO analysis
     const metaTags = $('meta').map((i, el) => ({
@@ -55,13 +76,15 @@ app.post('/analyze', async (req, res) => {
 
     res.json({
       title,
+      title_analysis: titleAnalysis,
       meta_description: metaDescription,
-      h1_tags: h1Tags,
+      heading_analysis: headingAnalysis,
       keyword_density: keywordDensity,
       readability_score: readabilityScore,
       internal_links: internalLinks,
       external_links: externalLinks,
       keyword_in_url: keywordInUrl,
+      keyword_in_title: keywordInTitle,
       keyword_in_headings: keywordInHeadings,
       meta_tags: metaTags,
       open_graph_tags: openGraphTags,
@@ -87,6 +110,15 @@ function calculateReadabilityScore(html) {
   const sentences = text.split(/[.!?]+/).length;
   const avgWordsPerSentence = words / sentences;
   return Math.max(0, Math.min(100, 206.835 - 1.015 * avgWordsPerSentence)).toFixed(2);
+}
+
+function analyzeHeadings(headings, keyword) {
+  return {
+    count: headings.length,
+    withKeyword: headings.filter(h => h.toLowerCase().includes(keyword.toLowerCase())).length,
+    averageLength: headings.reduce((sum, h) => sum + h.length, 0) / headings.length || 0,
+    list: headings
+  };
 }
 
 const PORT = process.env.PORT || 3000;
