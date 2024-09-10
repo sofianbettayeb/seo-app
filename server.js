@@ -74,6 +74,9 @@ app.post('/analyze', async (req, res) => {
     const canonicalUrl = $('link[rel="canonical"]').attr('href') || '';
     const robotsMeta = $('meta[name="robots"]').attr('content') || '';
 
+    // New Content Analysis
+    const contentAnalysis = analyzeContent($, keyword);
+
     res.json({
       title,
       title_analysis: titleAnalysis,
@@ -90,7 +93,8 @@ app.post('/analyze', async (req, res) => {
       open_graph_tags: openGraphTags,
       twitter_tags: twitterTags,
       canonical_url: canonicalUrl,
-      robots_meta: robotsMeta
+      robots_meta: robotsMeta,
+      content_analysis: contentAnalysis
     });
   } catch (error) {
     res.status(500).json({ error: 'An error occurred while analyzing the URL' });
@@ -99,8 +103,9 @@ app.post('/analyze', async (req, res) => {
 
 function calculateKeywordDensity(html, keyword) {
   const text = cheerio.load(html).text().toLowerCase();
-  const wordCount = text.split(/\s+/).length;
-  const keywordCount = (text.match(new RegExp(keyword.toLowerCase(), 'g')) || []).length;
+  const words = text.split(/\s+/);
+  const wordCount = words.length;
+  const keywordCount = words.filter(word => word === keyword.toLowerCase()).length;
   return ((keywordCount / wordCount) * 100).toFixed(2);
 }
 
@@ -118,6 +123,22 @@ function analyzeHeadings(headings, keyword) {
     withKeyword: headings.filter(h => h.toLowerCase().includes(keyword.toLowerCase())).length,
     averageLength: headings.reduce((sum, h) => sum + h.length, 0) / headings.length || 0,
     list: headings
+  };
+}
+
+function analyzeContent($, keyword) {
+  const bodyText = $('body').text();
+  const words = bodyText.split(/\s+/);
+  const paragraphs = $('p');
+  const images = $('img');
+
+  return {
+    wordCount: words.length,
+    paragraphCount: paragraphs.length,
+    averageWordsPerParagraph: words.length / paragraphs.length,
+    imageCount: images.length,
+    keywordFrequency: words.filter(word => word.toLowerCase() === keyword.toLowerCase()).length,
+    keywordDensity: ((words.filter(word => word.toLowerCase() === keyword.toLowerCase()).length / words.length) * 100).toFixed(2)
   };
 }
 
