@@ -56,6 +56,7 @@ function displayResults(data) {
         ${generateLinkAnalysisHTML(data, internalLinksInfo, externalLinksInfo)}
         ${generateKeywordOptimizationHTML(data, keywordInUrlInfo, keywordInTitleInfo, keywordInH1Info, keywordInH2Info, keywordInH3Info)}
         ${generateMetaSeoHTML(data)}
+        ${generateImageAnalysisHTML(data)}
     `;
 
     resultsContainer.innerHTML = resultsHTML;
@@ -65,222 +66,48 @@ function displayResults(data) {
     }, 100);
 }
 
-function generateTitleAnalysisHTML(data) {
-    const titleLengthClass = getColorClass(data.title_analysis.length, [30, 60]);
-    const keywordPositionClass = getColorClass(data.title_analysis.keywordPosition, [1, 5]);
+// ... (keep all existing functions)
+
+function generateImageAnalysisHTML(data) {
+    const imageAnalysis = data.image_analysis;
+    const altTextPercentage = (imageAnalysis.imagesWithAlt / imageAnalysis.totalImages * 100).toFixed(2);
+    const keywordInAltPercentage = (imageAnalysis.imagesWithKeywordInAlt / imageAnalysis.totalImages * 100).toFixed(2);
+    const keywordInFilenamePercentage = (imageAnalysis.imagesWithKeywordInFilename / imageAnalysis.totalImages * 100).toFixed(2);
+    const largeImagesPercentage = (imageAnalysis.largeImages / imageAnalysis.totalImages * 100).toFixed(2);
+
     return `
         <div class="seo-section">
-            <h3>Title Analysis</h3>
+            <h3>Image Analysis</h3>
             <div class="metric">
-                <h4><i class="fas fa-heading"></i> Title</h4>
-                <p>${data.title}</p>
-                <small>A good title should be 50-60 characters long and include your main keyword.</small>
+                <h4><i class="fas fa-images"></i> Total Images</h4>
+                <p>${imageAnalysis.totalImages}</p>
+                <small>The total number of images found on the page.</small>
             </div>
             <div class="metric">
-                <h4><i class="fas fa-text-width"></i> Title Length: <span class="${titleLengthClass}">${data.title_analysis.length} characters</span></h4>
-                <p>${getTitleLengthExplanation(data.title_analysis.length)}</p>
+                <h4><i class="fas fa-font"></i> Images with Alt Text</h4>
+                <p>${imageAnalysis.imagesWithAlt} (${altTextPercentage}%)</p>
+                <small>Alt text helps search engines understand image content and improves accessibility.</small>
             </div>
             <div class="metric">
-                <h4><i class="fas fa-key"></i> Keyword in Title: <span class="${data.title_analysis.containsKeyword ? 'good' : 'poor'}">${data.title_analysis.containsKeyword ? 'Yes' : 'No'}</span></h4>
-                <p>${data.title_analysis.containsKeyword ? 'Great! Your keyword is in the title.' : 'Consider including your keyword in the title.'}</p>
-            </div>
-            ${data.title_analysis.containsKeyword ? `
-                <div class="metric">
-                    <h4><i class="fas fa-map-pin"></i> Keyword Position: <span class="${keywordPositionClass}">${data.title_analysis.keywordPosition}</span></h4>
-                    <p>${getKeywordPositionExplanation(data.title_analysis.keywordPosition)}</p>
-                </div>
-            ` : ''}
-        </div>
-    `;
-}
-
-function getTitleLengthExplanation(length) {
-    if (length < 30) return 'Your title is too short. Consider making it longer for better SEO.';
-    if (length > 60) return 'Your title is too long. Try to keep it under 60 characters for optimal display in search results.';
-    return 'Great! Your title length is optimal for SEO.';
-}
-
-function getKeywordPositionExplanation(position) {
-    if (position === 1) return 'Excellent! Your keyword is at the beginning of the title, which is ideal for SEO.';
-    if (position <= 5) return 'Good job! Your keyword is near the beginning of the title, which is good for SEO.';
-    return 'Consider moving your keyword closer to the beginning of the title for better SEO impact.';
-}
-
-function generateContentAnalysisHTML(data, keywordDensityInfo, readabilityInfo) {
-    return `
-        <div class="seo-section">
-            <h3>Content Analysis</h3>
-            <div class="metric">
-                <h4><i class="fas fa-percentage"></i> Keyword Density: <span class="${keywordDensityInfo.colorClass}">${data.keyword_density}%</span></h4>
-                <p>${keywordDensityInfo.explanation}</p>
-                <small>Keyword density is the percentage of times a keyword appears on a web page compared to the total number of words on the page.</small>
+                <h4><i class="fas fa-key"></i> Images with Keyword in Alt Text</h4>
+                <p>${imageAnalysis.imagesWithKeywordInAlt} (${keywordInAltPercentage}%)</p>
+                <small>Including the keyword in alt text can help with image SEO.</small>
             </div>
             <div class="metric">
-                <h4><i class="fas fa-book-reader"></i> Readability Score: <span class="${readabilityInfo.colorClass}">${data.readability_score}</span></h4>
-                <p>${readabilityInfo.explanation}</p>
-                <small>The readability score indicates how easy it is for people to read your content. A higher score means easier to read.</small>
-            </div>
-        </div>
-    `;
-}
-
-function generateHeadingAnalysisHTML(data) {
-    return `
-        <div class="seo-section">
-            <h3>Heading Analysis</h3>
-            ${generateHeadingTypeAnalysis(data.heading_analysis.h1, 'H1')}
-            ${generateHeadingTypeAnalysis(data.heading_analysis.h2, 'H2')}
-            ${generateHeadingTypeAnalysis(data.heading_analysis.h3, 'H3')}
-        </div>
-    `;
-}
-
-function generateHeadingTypeAnalysis(headingData, headingType) {
-    const headingCountClass = getColorClass(headingData.count, headingType === 'H1' ? [1, 1] : [1, 5]);
-    const keywordUsageClass = getColorClass(headingData.withKeyword, [1, 2]);
-    return `
-        <div class="metric">
-            <h4><i class="fas fa-${headingType.toLowerCase()}"></i> ${headingType} Tags</h4>
-            <p>Count: <span class="${headingCountClass}">${headingData.count}</span></p>
-            <p>With Keyword: <span class="${keywordUsageClass}">${headingData.withKeyword}</span></p>
-            <p>Average Length: ${headingData.averageLength.toFixed(2)} characters</p>
-            <ul>
-                ${headingData.list.map(tag => `<li>${tag}</li>`).join('')}
-            </ul>
-            <small>${getHeadingExplanation(headingType, headingData)}</small>
-        </div>
-    `;
-}
-
-function getHeadingExplanation(headingType, headingData) {
-    let explanation = '';
-    if (headingType === 'H1') {
-        explanation = headingData.count === 1 ? 'Good! You have one H1 tag, which is ideal.' : 'Consider using only one H1 tag per page for better structure.';
-    } else {
-        explanation = headingData.count > 0 ? `Good use of ${headingType} tags for content structure.` : `Consider using ${headingType} tags to better organize your content.`;
-    }
-    explanation += headingData.withKeyword > 0 ? ` Great job including your keyword in ${headingType} tags!` : ` Try to include your keyword in some ${headingType} tags.`;
-    return explanation;
-}
-
-function generateLinkAnalysisHTML(data, internalLinksInfo, externalLinksInfo) {
-    return `
-        <div class="seo-section">
-            <h3>Link Analysis</h3>
-            <div class="metric">
-                <h4><i class="fas fa-link"></i> Internal Links: <span class="${internalLinksInfo.colorClass}">${data.internal_links}</span></h4>
-                <p>${internalLinksInfo.explanation}</p>
-                <small>Internal links help search engines understand the structure of your site and distribute page authority.</small>
+                <h4><i class="fas fa-file-image"></i> Images with Keyword in Filename</h4>
+                <p>${imageAnalysis.imagesWithKeywordInFilename} (${keywordInFilenamePercentage}%)</p>
+                <small>Using keywords in image filenames can improve image search visibility.</small>
             </div>
             <div class="metric">
-                <h4><i class="fas fa-external-link-alt"></i> External Links: <span class="${externalLinksInfo.colorClass}">${data.external_links}</span></h4>
-                <p>${externalLinksInfo.explanation}</p>
-                <small>External links to reputable sources can improve your site's credibility and SEO.</small>
-            </div>
-        </div>
-    `;
-}
-
-function generateKeywordOptimizationHTML(data, keywordInUrlInfo, keywordInTitleInfo, keywordInH1Info, keywordInH2Info, keywordInH3Info) {
-    return `
-        <div class="seo-section">
-            <h3>Keyword Optimization</h3>
-            <div class="metric">
-                <h4><i class="fas fa-link"></i> Keyword in URL: <span class="${keywordInUrlInfo.colorClass}">${data.keyword_in_url ? 'Yes' : 'No'}</span></h4>
-                <p>${keywordInUrlInfo.explanation}</p>
-                <small>Having your keyword in the URL can help with SEO, but don't force it if it doesn't fit naturally.</small>
+                <h4><i class="fas fa-expand"></i> Large Images (>100x100px)</h4>
+                <p>${imageAnalysis.largeImages} (${largeImagesPercentage}%)</p>
+                <small>Large images are more likely to be content-relevant. Ensure they are optimized for web.</small>
             </div>
             <div class="metric">
-                <h4><i class="fas fa-heading"></i> Keyword in Title: <span class="${keywordInTitleInfo.colorClass}">${data.keyword_in_title ? 'Yes' : 'No'}</span></h4>
-                <p>${keywordInTitleInfo.explanation}</p>
-                <small>Including your keyword in the title tag is crucial for SEO as it helps search engines understand what your page is about.</small>
+                <h4><i class="fas fa-compress"></i> Small Images (≤100x100px)</h4>
+                <p>${imageAnalysis.smallImages}</p>
+                <small>Small images might be icons or thumbnails. Ensure they are used appropriately.</small>
             </div>
-            <div class="metric">
-                <h4><i class="fas fa-h1"></i> Keyword in H1: <span class="${keywordInH1Info.colorClass}">${data.keyword_in_headings.h1}</span></h4>
-                <p>${keywordInH1Info.explanation}</p>
-                <small>Using your keyword in the H1 tag reinforces the topic of your page to search engines and users.</small>
-            </div>
-            <div class="metric">
-                <h4><i class="fas fa-h2"></i> Keyword in H2: <span class="${keywordInH2Info.colorClass}">${data.keyword_in_headings.h2}</span></h4>
-                <p>${keywordInH2Info.explanation}</p>
-                <small>Including your keyword in H2 tags can help with topical relevance and content structure.</small>
-            </div>
-            <div class="metric">
-                <h4><i class="fas fa-h3"></i> Keyword in H3: <span class="${keywordInH3Info.colorClass}">${data.keyword_in_headings.h3}</span></h4>
-                <p>${keywordInH3Info.explanation}</p>
-                <small>Using your keyword in H3 tags can further reinforce the topic of your content.</small>
-            </div>
-        </div>
-    `;
-}
-
-function generateMetaSeoHTML(data) {
-    return `
-        <div class="seo-section">
-            <h3>Meta SEO</h3>
-            ${generateMetaDescriptionHTML(data)}
-            ${generateOpenGraphHTML(data)}
-            ${generateTwitterCardsHTML(data)}
-            ${generateCanonicalURLHTML(data)}
-            ${generateRobotsMetaHTML(data)}
-        </div>
-    `;
-}
-
-function generateMetaDescriptionHTML(data) {
-    return `
-        <div class="metric">
-            <h4><i class="fas fa-align-left"></i> Meta Description</h4>
-            <p>${data.meta_description || 'Not set'}</p>
-            <small>A good meta description should be 150-160 characters long and include your main keyword.</small>
-        </div>
-    `;
-}
-
-function generateOpenGraphHTML(data) {
-    return `
-        <div class="metric">
-            <h4><i class="fas fa-share-alt"></i> Open Graph Tags</h4>
-            ${data.open_graph_tags.length > 0 ? `
-                <ul>
-                    ${data.open_graph_tags.map(tag => `<li><strong>${tag.name}:</strong> ${tag.content}</li>`).join('')}
-                </ul>
-            ` : '<p>No Open Graph tags found.</p>'}
-            <small>Open Graph tags help control how your content appears when shared on social media platforms.</small>
-        </div>
-    `;
-}
-
-function generateTwitterCardsHTML(data) {
-    return `
-        <div class="metric">
-            <h4><i class="fab fa-twitter"></i> Twitter Cards</h4>
-            ${data.twitter_tags.length > 0 ? `
-                <ul>
-                    ${data.twitter_tags.map(tag => `<li><strong>${tag.name}:</strong> ${tag.content}</li>`).join('')}
-                </ul>
-            ` : '<p>No Twitter Card tags found.</p>'}
-            <small>Twitter Card tags help control how your content appears when shared on Twitter.</small>
-        </div>
-    `;
-}
-
-function generateCanonicalURLHTML(data) {
-    return `
-        <div class="metric">
-            <h4><i class="fas fa-link"></i> Canonical URL</h4>
-            <p>${data.canonical_url || 'Not set'}</p>
-            <small>The canonical URL helps prevent duplicate content issues by specifying the preferred version of a web page.</small>
-        </div>
-    `;
-}
-
-function generateRobotsMetaHTML(data) {
-    return `
-        <div class="metric">
-            <h4><i class="fas fa-robot"></i> Robots Meta Tag</h4>
-            <p>${data.robots_meta || 'Not set'}</p>
-            <small>The robots meta tag tells search engines how to crawl or index a page.</small>
         </div>
     `;
 }

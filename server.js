@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const axios = require('axios');
 const cheerio = require('cheerio');
+const sizeOf = require('image-size');
 
 const app = express();
 
@@ -74,6 +75,9 @@ app.post('/analyze', async (req, res) => {
     const canonicalUrl = $('link[rel="canonical"]').attr('href') || '';
     const robotsMeta = $('meta[name="robots"]').attr('content') || '';
 
+    // Image analysis
+    const imageAnalysis = await analyzeImages($, url);
+
     res.json({
       title,
       title_analysis: titleAnalysis,
@@ -90,7 +94,8 @@ app.post('/analyze', async (req, res) => {
       open_graph_tags: openGraphTags,
       twitter_tags: twitterTags,
       canonical_url: canonicalUrl,
-      robots_meta: robotsMeta
+      robots_meta: robotsMeta,
+      image_analysis: imageAnalysis
     });
   } catch (error) {
     res.status(500).json({ error: 'An error occurred while analyzing the URL' });
@@ -118,6 +123,58 @@ function analyzeHeadings(headings, keyword) {
     withKeyword: headings.filter(h => h.toLowerCase().includes(keyword.toLowerCase())).length,
     averageLength: headings.reduce((sum, h) => sum + h.length, 0) / headings.length || 0,
     list: headings
+  };
+}
+
+async function analyzeImages($, baseUrl) {
+  const images = $('img');
+  const totalImages = images.length;
+  let imagesWithAlt = 0;
+  let imagesWithKeywordInAlt = 0;
+  let imagesWithKeywordInFilename = 0;
+  let largeImages = 0;
+  let smallImages = 0;
+
+  const imageAnalysisPromises = images.map(async (i, img) => {
+    const src = $(img).attr('src');
+    const alt = $(img).attr('alt');
+    const fullSrc = src.startsWith('http') ? src : new URL(src, baseUrl).href;
+
+    if (alt) {
+      imagesWithAlt++;
+      if (alt.toLowerCase().includes(keyword.toLowerCase())) {
+        imagesWithKeywordInAlt++;
+      }
+    }
+
+    if (src.toLowerCase().includes(keyword.toLowerCase())) {
+      imagesWithKeywordInFilename++;
+    }
+
+    try {
+      const response = await axios.get(fullSrc, { responseType: 'arraybuffer' });
+      const buffer = Buffer.from(response.data, 'binary');
+      const dimensions = sizeOf(buffer);
+      
+      if (dimensions.width > 100 && dimensions.height > 100) {
+        largeImages++;
+      } else {
+        smallImages++;
+      }
+    } catch (error) {
+      console.error(`Error analyzing image: ${fullSrc}`, error.message);
+    }
+  });
+
+  await Promise.all(imageAnalysisPromises);
+
+  return {
+    totalImages,
+    imagesWithAlt,
+    imagesWithKeywordInAlt,
+    imagesWithKeywordInFilename,
+    largeImages,
+    smallImages
   };
 }
 
