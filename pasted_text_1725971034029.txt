@@ -1,11 +1,11 @@
 import { getColorClass, getKeywordDensityInfo, getReadabilityInfo, getLinkCountInfo, getKeywordInfo } from './seoAnalysis.js';
 
 function calculateOverallScore(data) {
-    // Implementation details...
+    // ... (existing code)
 }
 
 function getOverallScoreInfo(score) {
-    // Implementation details...
+    // ... (existing code)
 }
 
 function displayResults(data) {
@@ -90,36 +90,27 @@ function getKeywordPositionExplanation(position) {
 }
 
 function generateContentAnalysisHTML(data, keywordDensityInfo, readabilityInfo) {
-    // Implementation details...
+    // ... (existing code)
 }
 
 function generateHeadingAnalysisHTML(data) {
-    // Implementation details...
+    // ... (existing code)
 }
 
 function generateLinkAnalysisHTML(data, internalLinksInfo, externalLinksInfo) {
-    // Implementation details...
+    // ... (existing code)
 }
 
 function generateKeywordOptimizationHTML(data, keywordInUrlInfo, keywordInTitleInfo, keywordInH1Info, keywordInH2Info, keywordInH3Info) {
-    // Implementation details...
+    // ... (existing code)
 }
 
 function generateMetaSeoHTML(data) {
-    // Implementation details...
+    // ... (existing code)
 }
 
 function generateImageAnalysisHTML(data) {
-    // Implementation details...
+    // ... (existing code)
 }
 
-export { 
-    displayResults, 
-    generateTitleAnalysisHTML, 
-    generateContentAnalysisHTML, 
-    generateHeadingAnalysisHTML, 
-    generateLinkAnalysisHTML, 
-    generateKeywordOptimizationHTML, 
-    generateMetaSeoHTML, 
-    generateImageAnalysisHTML 
-};
+export { displayResults, generateTitleAnalysisHTML };
