@@ -84,6 +84,9 @@ app.post('/analyze', async (req, res) => {
     const outboundLinksCount = countOutboundLinks($, url);
     const schemaPresence = checkSchemaPresence($);
 
+    // Slug analysis
+    const slugAnalysis = analyzeSlug(url, keyword);
+
     res.json({
       title,
       title_analysis: titleAnalysis,
@@ -106,7 +109,8 @@ app.post('/analyze', async (req, res) => {
       keyword_in_introduction: keywordInIntroduction,
       internal_links_count: internalLinksCount,
       outbound_links_count: outboundLinksCount,
-      schema_presence: schemaPresence
+      schema_presence: schemaPresence,
+      slug_analysis: slugAnalysis
     });
   } catch (error) {
     res.status(500).json({ error: 'An error occurred while analyzing the URL' });
@@ -190,7 +194,6 @@ function calculateContentToHtmlRatio($) {
   return ((textSize / htmlSize) * 100).toFixed(2);
 }
 
-// New functions for content analysis features
 function checkBreadcrumbs($) {
   const breadcrumbSelectors = [
     '.breadcrumbs',
@@ -231,6 +234,53 @@ function countOutboundLinks($, baseUrl) {
 function checkSchemaPresence($) {
   const schemaScripts = $('script[type="application/ld+json"]');
   return schemaScripts.length > 0;
+}
+
+function analyzeSlug(url, keyword) {
+  const parsedUrl = new URL(url);
+  const slug = parsedUrl.pathname.split('/').filter(Boolean).pop() || '';
+
+  return {
+    slug: slug,
+    length: slug.length,
+    containsKeyword: slug.toLowerCase().includes(keyword.toLowerCase()),
+    isReadable: isSlugReadable(slug),
+    hasDashes: slug.includes('-'),
+    hasUnderscores: slug.includes('_'),
+    hasNumbers: /\d/.test(slug),
+    recommendation: getSlugRecommendation(slug, keyword)
+  };
+}
+
+function isSlugReadable(slug) {
+  // Check if the slug contains only alphanumeric characters and hyphens
+  return /^[a-z0-9-]+$/i.test(slug);
+}
+
+function getSlugRecommendation(slug, keyword) {
+  let recommendation = '';
+
+  if (slug.length === 0) {
+    recommendation += 'Add a descriptive slug to the URL. ';
+  } else {
+    if (slug.length > 60) {
+      recommendation += 'Consider shortening the slug. ';
+    }
+    if (!slug.toLowerCase().includes(keyword.toLowerCase())) {
+      recommendation += 'Include the main keyword in the slug if possible. ';
+    }
+    if (slug.includes('_')) {
+      recommendation += 'Replace underscores with hyphens for better readability. ';
+    }
+    if (!/^[a-z0-9-]+$/i.test(slug)) {
+      recommendation += 'Use only lowercase letters, numbers, and hyphens in the slug. ';
+    }
+    if (/\d/.test(slug)) {
+      recommendation += 'Consider removing numbers from the slug unless necessary. ';
+    }
+  }
+
+  return recommendation.trim() || 'The current slug is well-optimized.';
 }
 
 const PORT = process.env.PORT || 3000;
