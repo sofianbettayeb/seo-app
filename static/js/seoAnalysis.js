@@ -1,4 +1,5 @@
 function getColorClass(value, thresholds) {
+    if (value === undefined || value === null) return '';
     if (value < thresholds[0]) return 'poor';
     if (value < thresholds[1]) return 'moderate';
     return 'good';
