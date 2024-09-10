@@ -75,6 +75,14 @@ function generateImageAnalysisHTML(data) {
     const keywordInFilenamePercentage = (imageAnalysis.imagesWithKeywordInFilename / imageAnalysis.totalImages * 100).toFixed(2);
     const largeImagesPercentage = (imageAnalysis.largeImages / imageAnalysis.totalImages * 100).toFixed(2);
 
+    const totalFileSizeMB = (imageAnalysis.totalFileSize / (1024 * 1024)).toFixed(2);
+    const averageFileSizeKB = (imageAnalysis.averageFileSize / 1024).toFixed(2);
+    const averageLoadTimeMS = imageAnalysis.averageLoadTime.toFixed(2);
+
+    const imageFormatsHTML = Object.entries(imageAnalysis.imageFormats)
+        .map(([format, count]) => `<li>${format.toUpperCase()}: ${count}</li>`)
+        .join('');
+
     return `
         <div class="seo-section">
             <h3>Image Analysis</h3>
@@ -107,6 +115,28 @@ function generateImageAnalysisHTML(data) {
                 <h4><i class="fas fa-compress"></i> Small Images (≤100x100px)</h4>
                 <p>${imageAnalysis.smallImages}</p>
                 <small>Small images might be icons or thumbnails. Ensure they are used appropriately.</small>
+            </div>
+            <div class="metric">
+                <h4><i class="fas fa-weight"></i> Total Image Size</h4>
+                <p>${totalFileSizeMB} MB</p>
+                <small>The combined file size of all images on the page.</small>
+            </div>
+            <div class="metric">
+                <h4><i class="fas fa-balance-scale"></i> Average Image Size</h4>
+                <p>${averageFileSizeKB} KB</p>
+                <small>The average file size of images on the page. Aim for smaller sizes to improve load times.</small>
+            </div>
+            <div class="metric">
+                <h4><i class="fas fa-clock"></i> Average Load Time</h4>
+                <p>${averageLoadTimeMS} ms</p>
+                <small>The average time it takes to load an image. Lower is better for page speed.</small>
+            </div>
+            <div class="metric">
+                <h4><i class="fas fa-file-image"></i> Image Formats</h4>
+                <ul>
+                    ${imageFormatsHTML}
+                </ul>
+                <small>The distribution of image formats used on the page. Modern formats like WebP can improve performance.</small>
             </div>
         </div>
     `;
