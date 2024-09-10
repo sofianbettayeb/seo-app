@@ -1,62 +1,44 @@
-// Helper function to generate explanation text based on ranges and conditions
-function getExplanationText(value, ranges) {
-    for (const { condition, text } of ranges) {
-        if (condition(value)) return text;
-    }
-    return '';
-}
-
-// Simplified color class function
 function getColorClass(value, thresholds) {
-    const [low, high] = thresholds;
-    return value < low ? 'poor' : value < high ? 'moderate' : 'good';
-}
+    if (value < thresholds[0]) return 'poor';
+    if (value < thresholds[1]) return 'moderate';
+    return 'good';
+}    
 
-// Keyword Density Info function
 function getKeywordDensityInfo(density) {
     const colorClass = getColorClass(density, [1, 2.5]);
-    const explanationRanges = [
-        { condition: v => v < 1, text: 'Too low. Consider increasing keyword usage.' },
-        { condition: v => v > 3, text: 'Too high. Consider reducing keyword usage to avoid keyword stuffing.' },
-        { condition: v => v >= 1 && v < 1.5, text: 'Good, but could be improved.' },
-        { condition: v => v > 2.5 && v <= 3, text: 'Good, but be careful not to overuse.' },
-        { condition: v => v >= 1.5 && v <= 2.5, text: 'Excellent keyword density.' }
-    ];
-    const explanation = getExplanationText(density, explanationRanges);
+    let explanation = '';
+    if (density < 1) explanation = 'Too low. Consider increasing keyword usage.';
+    else if (density > 3) explanation = 'Too high. Consider reducing keyword usage to avoid keyword stuffing.';
+    else if (density >= 1 && density < 1.5) explanation = 'Good, but could be improved.';
+    else if (density > 2.5 && density <= 3) explanation = 'Good, but be careful not to overuse.';
+    else explanation = 'Excellent keyword density.';
     return { colorClass, explanation };
 }
 
-// Readability Info function
 function getReadabilityInfo(score) {
     const colorClass = getColorClass(score, [30, 70]);
-    const explanationRanges = [
-        { condition: v => v < 30, text: 'Very difficult to read. Consider simplifying the content.' },
-        { condition: v => v < 50, text: 'Difficult to read. Try to make it more accessible.' },
-        { condition: v => v < 60, text: 'Fairly difficult to read. Some improvements could be made.' },
-        { condition: v => v < 70, text: 'Plain English. Good readability.' },
-        { condition: v => v < 80, text: 'Fairly easy to read. Well done!' },
-        { condition: v => v < 90, text: 'Easy to read. Great job!' },
-        { condition: v => v >= 90, text: 'Very easy to read. Excellent readability!' }
-    ];
-    const explanation = getExplanationText(score, explanationRanges);
+    let explanation = '';
+    if (score < 30) explanation = 'Very difficult to read. Consider simplifying the content.';
+    else if (score < 50) explanation = 'Difficult to read. Try to make it more accessible.';
+    else if (score < 60) explanation = 'Fairly difficult to read. Some improvements could be made.';
+    else if (score < 70) explanation = 'Plain English. Good readability.';
+    else if (score < 80) explanation = 'Fairly easy to read. Well done!';
+    else if (score < 90) explanation = 'Easy to read. Great job!';
+    else explanation = 'Very easy to read. Excellent readability!';
     return { colorClass, explanation };
 }
 
-// Link Count Info function (internal/external links)
 function getLinkCountInfo(count, isInternal) {
-    const linkType = isInternal ? 'internal' : 'external';
     const colorClass = getColorClass(count, [1, 5]);
-    const explanationRanges = [
-        { condition: v => v === 0, text: `No ${linkType} links found. Consider adding some for better SEO.` },
-        { condition: v => v < 3, text: `Few ${linkType} links. Consider adding more for better SEO.` },
-        { condition: v => v < 10, text: `Good number of ${linkType} links.` },
-        { condition: v => v >= 10, text: `Excellent number of ${linkType} links. Make sure they're all relevant.` }
-    ];
-    const explanation = getExplanationText(count, explanationRanges);
+    const linkType = isInternal ? 'internal' : 'external';
+    let explanation = '';
+    if (count === 0) explanation = `No ${linkType} links found. Consider adding some for better SEO.`;
+    else if (count < 3) explanation = `Few ${linkType} links. Consider adding more for better SEO.`;
+    else if (count < 10) explanation = `Good number of ${linkType} links.`;
+    else explanation = `Excellent number of ${linkType} links. Make sure they're all relevant.`;
     return { colorClass, explanation };
 }
 
-// Keyword Presence Info function
 function getKeywordInfo(isPresent, type) {
     const colorClass = isPresent ? 'good' : 'poor';
     const explanation = isPresent
