@@ -74,6 +74,16 @@ app.post('/analyze', async (req, res) => {
     const canonicalUrl = $('link[rel="canonical"]').attr('href') || '';
     const robotsMeta = $('meta[name="robots"]').attr('content') || '';
 
+    // Enhanced content analysis
+    const contentAnalysis = analyzeContent($, keyword);
+
+    // New content analysis features
+    const breadcrumbs = checkBreadcrumbs($);
+    const keywordInIntroduction = checkKeywordInIntroduction($, keyword);
+    const internalLinksCount = countInternalLinks($, url);
+    const outboundLinksCount = countOutboundLinks($, url);
+    const schemaPresence = checkSchemaPresence($);
+
     res.json({
       title,
       title_analysis: titleAnalysis,
@@ -90,7 +100,13 @@ app.post('/analyze', async (req, res) => {
       open_graph_tags: openGraphTags,
       twitter_tags: twitterTags,
       canonical_url: canonicalUrl,
-      robots_meta: robotsMeta
+      robots_meta: robotsMeta,
+      content_analysis: contentAnalysis,
+      breadcrumbs,
+      keyword_in_introduction: keywordInIntroduction,
+      internal_links_count: internalLinksCount,
+      outbound_links_count: outboundLinksCount,
+      schema_presence: schemaPresence
     });
   } catch (error) {
     res.status(500).json({ error: 'An error occurred while analyzing the URL' });
@@ -119,6 +135,102 @@ function analyzeHeadings(headings, keyword) {
     averageLength: headings.reduce((sum, h) => sum + h.length, 0) / headings.length || 0,
     list: headings
   };
+}
+
+function analyzeContent($, keyword) {
+  const bodyText = $('body').text();
+  const paragraphs = $('p').map((i, el) => $(el).text().trim()).get().filter(p => p.length > 0);
+  const wordCount = bodyText.trim().split(/\s+/).length;
+  const keywordCount = (bodyText.toLowerCase().match(new RegExp(keyword.toLowerCase(), 'g')) || []).length;
+  const keywordDensity = ((keywordCount / wordCount) * 100).toFixed(2);
+
+  const sentenceCount = bodyText.split(/[.!?]+/).length;
+  const avgWordsPerSentence = (wordCount / sentenceCount).toFixed(2);
+
+  const paragraphAnalysis = paragraphs.map(p => ({
+    text: p,
+    wordCount: p.split(/\s+/).length,
+    containsKeyword: p.toLowerCase().includes(keyword.toLowerCase())
+  }));
+
+  const avgParagraphLength = (paragraphs.reduce((sum, p) => sum + p.split(/\s+/).length, 0) / paragraphs.length).toFixed(2);
+
+  const sentenceVariety = calculateSentenceVariety(bodyText);
+
+  const contentToHtmlRatio = calculateContentToHtmlRatio($);
+
+  return {
+    wordCount,
+    keywordCount,
+    keywordDensity,
+    sentenceCount,
+    avgWordsPerSentence,
+    paragraphCount: paragraphs.length,
+    avgParagraphLength,
+    paragraphAnalysis,
+    sentenceVariety,
+    contentToHtmlRatio
+  };
+}
+
+function calculateSentenceVariety(text) {
+  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+  const sentenceLengths = sentences.map(s => s.trim().split(/\s+/).length);
+  const avgLength = sentenceLengths.reduce((sum, length) => sum + length, 0) / sentences.length;
+  const variance = sentenceLengths.reduce((sum, length) => sum + Math.pow(length - avgLength, 2), 0) / sentences.length;
+  return {
+    avgSentenceLength: avgLength.toFixed(2),
+    sentenceLengthVariance: variance.toFixed(2)
+  };
+}
+
+function calculateContentToHtmlRatio($) {
+  const htmlSize = $.html().length;
+  const textSize = $('body').text().trim().length;
+  return ((textSize / htmlSize) * 100).toFixed(2);
+}
+
+// New functions for content analysis features
+function checkBreadcrumbs($) {
+  const breadcrumbSelectors = [
+    '.breadcrumbs',
+    '.breadcrumb',
+    '[itemtype="https://schema.org/BreadcrumbList"]',
+    'nav[aria-label="Breadcrumb"]'
+  ];
+
+  for (const selector of breadcrumbSelectors) {
+    if ($(selector).length > 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function checkKeywordInIntroduction($, keyword) {
+  const introductionSelectors = ['p:first-of-type', '.introduction', '#intro'];
+  for (const selector of introductionSelectors) {
+    const introText = $(selector).text().toLowerCase();
+    if (introText.includes(keyword.toLowerCase())) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function countInternalLinks($, baseUrl) {
+  const internalLinks = $('a[href^="/"], a[href^="' + baseUrl + '"]');
+  return internalLinks.length;
+}
+
+function countOutboundLinks($, baseUrl) {
+  const outboundLinks = $('a[href^="http"]:not([href^="' + baseUrl + '"])');
+  return outboundLinks.length;
+}
+
+function checkSchemaPresence($) {
+  const schemaScripts = $('script[type="application/ld+json"]');
+  return schemaScripts.length > 0;
 }
 
 const PORT = process.env.PORT || 3000;

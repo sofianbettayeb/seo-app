@@ -1,5 +1,5 @@
 import { isValidUrl, showLoading, showError } from './utils.js';
-import { displayResults } from './resultsDisplay.js';
+import { displayResults, generateOverallScoreHTML, calculateOverallScore } from './resultsDisplay.js';
 import { analyzeSEO } from './api.js';
 
 document.addEventListener('DOMContentLoaded', () => {
