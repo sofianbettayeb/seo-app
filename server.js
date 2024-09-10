@@ -2,8 +2,6 @@ const express = require('express');
 const path = require('path');
 const axios = require('axios');
 const cheerio = require('cheerio');
-const sizeOf = require('image-size');
-const FileType = import('file-type');
 
 const app = express();
 
@@ -76,9 +74,6 @@ app.post('/analyze', async (req, res) => {
     const canonicalUrl = $('link[rel="canonical"]').attr('href') || '';
     const robotsMeta = $('meta[name="robots"]').attr('content') || '';
 
-    // Enhanced image analysis
-    const imageAnalysis = await analyzeImages($, url, keyword);
-
     res.json({
       title,
       title_analysis: titleAnalysis,
@@ -95,8 +90,7 @@ app.post('/analyze', async (req, res) => {
       open_graph_tags: openGraphTags,
       twitter_tags: twitterTags,
       canonical_url: canonicalUrl,
-      robots_meta: robotsMeta,
-      image_analysis: imageAnalysis
+      robots_meta: robotsMeta
     });
   } catch (error) {
     res.status(500).json({ error: 'An error occurred while analyzing the URL' });
@@ -124,88 +118,6 @@ function analyzeHeadings(headings, keyword) {
     withKeyword: headings.filter(h => h.toLowerCase().includes(keyword.toLowerCase())).length,
     averageLength: headings.reduce((sum, h) => sum + h.length, 0) / headings.length || 0,
     list: headings
-  };
-}
-
-async function analyzeImages($, baseUrl, keyword) {
-  const images = $('img');
-  const totalImages = images.length;
-  let imagesWithAlt = 0;
-  let imagesWithKeywordInAlt = 0;
-  let imagesWithKeywordInFilename = 0;
-  let largeImages = 0;
-  let smallImages = 0;
-  let totalFileSize = 0;
-  let imageFormats = {};
-  let loadTimes = [];
-
-  const imageAnalysisPromises = images.map(async (i, img) => {
-    const src = $(img).attr('src');
-    const alt = $(img).attr('alt');
-    const fullSrc = src.startsWith('http') ? src : new URL(src, baseUrl).href;
-
-    if (alt) {
-      imagesWithAlt++;
-      if (alt.toLowerCase().includes(keyword.toLowerCase())) {
-        imagesWithKeywordInAlt++;
-      }
-    }
-
-    if (src.toLowerCase().includes(keyword.toLowerCase())) {
-      imagesWithKeywordInFilename++;
-    }
-
-    try {
-      const startTime = Date.now();
-      const response = await axios.get(fullSrc, { responseType: 'arraybuffer' });
-      const loadTime = Date.now() - startTime;
-      loadTimes.push(loadTime);
-
-      const buffer = Buffer.from(response.data, 'binary');
-      const fileSize = buffer.length;
-      totalFileSize += fileSize;
-
-      const dimensions = sizeOf(buffer);
-      if (dimensions.width > 100 && dimensions.height > 100) {
-        largeImages++;
-      } else {
-        smallImages++;
-      }
-
-      const fileTypeModule = await FileType;
-      const type = await fileTypeModule.fileTypeFromBuffer(buffer);
-      if (type) {
-        imageFormats[type.ext] = (imageFormats[type.ext] || 0) + 1;
-      }
-
-      return {
-        src: fullSrc,
-        alt,
-        dimensions,
-        fileSize,
-        format: type ? type.ext : 'unknown',
-        loadTime
-      };
-    } catch (error) {
-      console.error(`Error analyzing image: ${fullSrc}`, error.message);
-      return null;
-    }
-  });
-
-  const imageDetails = (await Promise.all(imageAnalysisPromises)).filter(Boolean);
-
-  return {
-    totalImages,
-    imagesWithAlt,
-    imagesWithKeywordInAlt,
-    imagesWithKeywordInFilename,
-    largeImages,
-    smallImages,
-    totalFileSize,
-    averageFileSize: totalFileSize / totalImages,
-    imageFormats,
-    averageLoadTime: loadTimes.reduce((a, b) => a + b, 0) / loadTimes.length,
-    imageDetails
   };
 }
 
