@@ -11,6 +11,7 @@ function displayResults(data) {
         ${generateOverallScoreHTML(data)}
         ${generateMetaHTML(data)}
         ${generateTitleAndHeadingsHTML(data)}
+        ${generateTitleHierarchyHTML(data.title_hierarchy_analysis)}
         ${generateContentAndLinksHTML(data, keywordDensityInfo, readabilityInfo, internalLinksInfo, externalLinksInfo)}
         ${generateBreadcrumbsHTML(data)}
         ${generateSlugAnalysisHTML(data)}
@@ -30,6 +31,60 @@ function initCollapsibleSections() {
         });
     });
 }
+
+
+// Function to generate Title Hierarchy HTML
+function generateTitleHierarchyHTML(hierarchyAnalysis) {
+    const { headings, hierarchyIssues } = hierarchyAnalysis;
+    const issueClass = hierarchyIssues.length > 0 ? 'negative' : 'positive';
+    const issueIcon = hierarchyIssues.length > 0 ? '❌' : '✔️';
+
+    let issuesHTML = '';
+
+    // If there are issues with the hierarchy, display them
+    if (hierarchyIssues.length > 0) {
+        issuesHTML = `
+            <div class="analysis-issues">
+                ${hierarchyIssues.map(issue => `
+                    <p class="border-left poor">
+                        <strong>Issue:</strong> ${issue.message}
+                        <br><em>Problem with: ${issue.text}</em>
+                    </p>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    // Generate HTML for heading tags
+    const headingsHTML = headings.map(heading => `
+        <p class="border-left good">
+            <strong>${heading.tag.toUpperCase()}:</strong> ${heading.text}
+        </p>
+    `).join('');
+
+    return `
+        <div class="seo-section">
+            <div class="analysis-result">
+                <div class="analysis-header ${issueClass}">
+                    <span class="icon">${issueIcon}</span>
+                    <span class="title">Title Hierarchy</span>
+                    <button class="toggle-details">▼</button>
+                </div>
+                <div class="analysis-summary">
+                    Checks for correct sequence of heading tags.
+                </div>
+                <div class="analysis-details hidden">
+                    ${issuesHTML}
+                    <div class="analysis-headings">
+                        ${headingsHTML}
+                    </div>
+                    <a href="#" class="learn-more">Learn More</a>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
 
 // Function to calculate the overall SEO score
 function calculateOverallScore(data) {
@@ -187,6 +242,7 @@ function generateHeadingsForType(headingData, type) {
         </p>
     `;
 }
+
 
 // Content & Links Section (combined)
 function generateContentAndLinksHTML(data, keywordDensityInfo, readabilityInfo, internalLinksInfo, externalLinksInfo) {

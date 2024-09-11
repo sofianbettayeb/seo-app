@@ -352,3 +352,20 @@ p, strong, span {
     font-size: 0.9rem;
     margin-top: 0.2rem;
 }
+
+/* To give more spacing and alignment to the issues and headings */
+.analysis-issues p, .analysis-headings p {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem; /* Added padding for better alignment */
+}
+
+/* Give more distinction between issues and headings */
+.analysis-issues p {
+    font-weight: bold;
+    color: #e74c3c; /* Red color for issues */
+}
+
+.analysis-headings p {
+    font-weight: normal;
+    color: #ffffff; /* White text for headings */
+}
