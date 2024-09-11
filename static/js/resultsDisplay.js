@@ -190,22 +190,42 @@ function generateHeadingsForType(headingData, type) {
 
 // Content & Links Section (combined)
 function generateContentAndLinksHTML(data, keywordDensityInfo, readabilityInfo, internalLinksInfo, externalLinksInfo) {
+    // Determine if the content and links are optimized (positive or negative header)
+    const isContentOptimized = data.keyword_density > 0 && data.readability_score >= 60 && data.internal_links > 0 && data.external_links > 0;
+    const headerClass = isContentOptimized ? 'positive' : 'negative';
+    const headerIcon = isContentOptimized ? '✔️' : '❌';
+    const summaryText = isContentOptimized 
+        ? "Content and links are properly optimized with keyword density and readability." 
+        : "Content or links are not properly optimized.";
+
     return `
         <div class="seo-section">
             <div class="analysis-result">
-                <div class="analysis-header positive">
-                    <span class="icon">✔️</span>
+                <div class="analysis-header ${headerClass}">
+                    <span class="icon">${headerIcon}</span>
                     <span class="title">Content & Links</span>
                     <button class="toggle-details">▼</button>
                 </div>
                 <div class="analysis-summary">
-                    Content and links are properly optimized with keyword density and readability.
+                    ${summaryText}
                 </div>
                 <div class="analysis-details hidden">
-                    <p>Keyword Density: ${data.keyword_density}% (${keywordDensityInfo.explanation})</p>
-                    <p>Readability Score: ${data.readability_score} (${readabilityInfo.explanation})</p>
-                    <p>Internal Links: ${data.internal_links} (${internalLinksInfo.explanation})</p>
-                    <p>External Links: ${data.external_links} (${externalLinksInfo.explanation})</p>
+                    <p class="border-left ${keywordDensityInfo.colorClass}">
+                        <strong>Keyword Density:</strong> ${data.keyword_density}% 
+                        <small class="help-text">${keywordDensityInfo.explanation}</small>
+                    </p>
+                    <p class="border-left ${readabilityInfo.colorClass}">
+                        <strong>Readability Score:</strong> ${data.readability_score} 
+                        <small class="help-text">${readabilityInfo.explanation}</small>
+                    </p>
+                    <p class="border-left ${internalLinksInfo.colorClass}">
+                        <strong>Internal Links:</strong> ${data.internal_links} 
+                        <small class="help-text">${internalLinksInfo.explanation}</small>
+                    </p>
+                    <p class="border-left ${externalLinksInfo.colorClass}">
+                        <strong>External Links:</strong> ${data.external_links} 
+                        <small class="help-text">${externalLinksInfo.explanation}</small>
+                    </p>
                     <a href="#" class="learn-more">Learn More</a>
                 </div>
             </div>
@@ -215,20 +235,32 @@ function generateContentAndLinksHTML(data, keywordDensityInfo, readabilityInfo, 
 
 // Breadcrumbs Section
 function generateBreadcrumbsHTML(data) {
-    const colorClass = data.breadcrumbs ? 'good' : 'poor';
+    const isBreadcrumbsPresent = !!data.breadcrumbs;  // Ensure it's a boolean value
+    const colorClass = isBreadcrumbsPresent ? 'good' : 'poor';
+    const headerClass = isBreadcrumbsPresent ? 'positive' : 'negative';
+    const headerIcon = isBreadcrumbsPresent ? '✔️' : '❌';
+    const summaryText = isBreadcrumbsPresent 
+        ? 'Breadcrumbs are properly implemented.' 
+        : 'Breadcrumbs are missing.';
+
     return `
         <div class="seo-section">
             <div class="analysis-result">
-                <div class="analysis-header ${data.breadcrumbs ? 'positive' : 'negative'}">
-                    <span class="icon">${data.breadcrumbs ? '✔️' : '❌'}</span>
+                <div class="analysis-header ${headerClass}">
+                    <span class="icon">${headerIcon}</span>
                     <span class="title">Breadcrumbs</span>
                     <button class="toggle-details">▼</button>
                 </div>
                 <div class="analysis-summary">
-                    ${data.breadcrumbs ? 'Breadcrumbs are properly implemented.' : 'Breadcrumbs are missing.'}
+                    ${summaryText}
                 </div>
                 <div class="analysis-details hidden">
-                    <p>Breadcrumbs help users and search engines navigate your site structure effectively.</p>
+                    <p class="border-left ${colorClass}">
+                        <strong>Breadcrumbs:</strong> ${isBreadcrumbsPresent ? 'Present' : 'Not Found'}
+                        <small class="help-text">
+                            Breadcrumbs help users and search engines navigate your site structure effectively.
+                        </small>
+                    </p>
                     <a href="#" class="learn-more">Learn More</a>
                 </div>
             </div>
@@ -239,25 +271,46 @@ function generateBreadcrumbsHTML(data) {
 // Slug Analysis Section
 function generateSlugAnalysisHTML(data) {
     const slugAnalysis = data.slug_analysis;
-    const slugColorClass = getColorClass(slugAnalysis.isReadable && slugAnalysis.containsKeyword ? 100 : 0, [50, 80]);
+    const isSlugOptimized = slugAnalysis.isReadable && slugAnalysis.containsKeyword;
+    const slugColorClass = getColorClass(isSlugOptimized ? 100 : 0, [50, 80]);
+
+    const headerClass = isSlugOptimized ? 'positive' : 'negative';
+    const headerIcon = isSlugOptimized ? '✔️' : '❌';
+    const summaryText = isSlugOptimized
+        ? 'The URL slug is readable and optimized.'
+        : 'The URL slug needs improvement.';
 
     return `
         <div class="seo-section">
             <div class="analysis-result">
-                <div class="analysis-header ${slugAnalysis.isReadable && slugAnalysis.containsKeyword ? 'positive' : 'negative'}">
-                    <span class="icon">${slugAnalysis.isReadable && slugAnalysis.containsKeyword ? '✔️' : '❌'}</span>
+                <div class="analysis-header ${headerClass}">
+                    <span class="icon">${headerIcon}</span>
                     <span class="title">Slug Analysis</span>
                     <button class="toggle-details">▼</button>
                 </div>
                 <div class="analysis-summary">
-                    ${slugAnalysis.isReadable ? 'The URL slug is readable and optimized.' : 'The URL slug needs improvement.'}
+                    ${summaryText}
                 </div>
                 <div class="analysis-details hidden">
-                    <p>Slug: ${slugAnalysis.slug || 'No slug found'}</p>
-                    <p>Contains Keyword: ${slugAnalysis.containsKeyword ? 'Yes' : 'No'}</p>
-                    <p>Readable: ${slugAnalysis.isReadable ? 'Yes' : 'No'}</p>
-                    <p>Uses Hyphens: ${slugAnalysis.hasDashes ? 'Yes' : 'No'}</p>
-                    <p>Contains Numbers: ${slugAnalysis.hasNumbers ? 'Yes' : 'No'}</p>
+                    <p class="border-left ${slugColorClass}">
+                        <strong>Slug:</strong> ${slugAnalysis.slug || 'No slug found'}
+                    </p>
+                    <p class="border-left ${slugAnalysis.containsKeyword ? 'good' : 'poor'}">
+                        <strong>Contains Keyword:</strong> ${slugAnalysis.containsKeyword ? 'Yes' : 'No'}
+                        <small class="help-text">The slug should contain the main keyword for better optimization.</small>
+                    </p>
+                    <p class="border-left ${slugAnalysis.isReadable ? 'good' : 'poor'}">
+                        <strong>Readable:</strong> ${slugAnalysis.isReadable ? 'Yes' : 'No'}
+                        <small class="help-text">A readable slug is short, simple, and easy to understand.</small>
+                    </p>
+                    <p class="border-left ${slugAnalysis.hasDashes ? 'good' : 'poor'}">
+                        <strong>Uses Hyphens:</strong> ${slugAnalysis.hasDashes ? 'Yes' : 'No'}
+                        <small class="help-text">Use hyphens (-) in slugs instead of underscores (_).</small>
+                    </p>
+                    <p class="border-left ${!slugAnalysis.hasNumbers ? 'good' : 'poor'}">
+                        <strong>Don't Contains Numbers:</strong> ${slugAnalysis.hasNumbers ? 'No' : 'Yes'}
+                        <small class="help-text">Avoid using numbers in slugs unless they are necessary.</small>
+                    </p>
                     <a href="#" class="learn-more">Learn More</a>
                 </div>
             </div>
