@@ -9,17 +9,29 @@ function displayResults(data) {
 
     resultsContainer.innerHTML = `
         ${generateOverallScoreHTML(data)}
-        ${generateTitleAnalysisHTML(data)}
-        ${generateMetaDescriptionHTML(data)}
-        ${generateHeadingAnalysisHTML(data)}
-        ${generateContentAnalysisHTML(data, keywordDensityInfo, readabilityInfo)}
-        ${generateLinkAnalysisHTML(data, internalLinksInfo, externalLinksInfo)}
-        ${generateMetaSEOAnalysisHTML(data)}
-        ${generateNewContentAnalysisHTML(data)}
+        ${generateMetaHTML(data)}
+        ${generateTitleAndHeadingsHTML(data)}
+        ${generateContentAndLinksHTML(data, keywordDensityInfo, readabilityInfo, internalLinksInfo, externalLinksInfo)}
+        ${generateBreadcrumbsHTML(data)}
         ${generateSlugAnalysisHTML(data)}
     `;
+
+    // Initialize collapsible sections
+    initCollapsibleSections();
 }
 
+// Initialize collapsible sections for toggling details
+function initCollapsibleSections() {
+    document.querySelectorAll('.toggle-details').forEach(button => {
+        button.addEventListener('click', () => {
+            const details = button.closest('.analysis-result').querySelector('.analysis-details');
+            details.classList.toggle('hidden');
+            button.classList.toggle('open');
+        });
+    });
+}
+
+// Function to calculate the overall SEO score
 function calculateOverallScore(data) {
     let score = 0;
     if (data.keyword_in_title) score += 10;
@@ -45,265 +57,196 @@ function calculateOverallScore(data) {
 
 function generateOverallScoreHTML(data) {
     const overallScore = calculateOverallScore(data);
+    const scoreClass = overallScore >= 50 ? 'positive' : 'negative'; // Green if score >= 50, else Red
+
     return `
         <div class="seo-section overall-score ${getColorClass(overallScore, [50, 80])}">
-            <h3>Overall SEO Score</h3>
-            <div class="score">${overallScore}/100</div>
-            <p>This score is based on various SEO factors analyzed on your page.</p>
+            <div class="analysis-result">
+                <div class="analysis-header ${scoreClass}">
+                    <span class="icon">${overallScore >= 50 ? '✔️' : '❌'}</span>
+                    <span class="title">Overall SEO Score is: ${overallScore}/100</span>
+                    <button class="toggle-details">▼</button>
+                </div>
+                <div class="analysis-summary">
+                    This score is based on various SEO factors analyzed on your page.
+                </div>
+                <div class="analysis-details hidden">
+                    <p>Your overall SEO score is <strong>${overallScore}/100</strong>. It reflects the optimization level of key factors such as meta information, readability, links, and more.</p>
+                    <a href="#" class="learn-more">Learn More</a>
+                </div>
+            </div>
         </div>
     `;
 }
 
-function generateTitleAnalysisHTML(data) {
-    const titleColorClass = getColorClass(data.title_analysis.length, [30, 60]);
+
+
+// Meta HTML + Meta SEO Section (including OG and Twitter Tags)
+function generateMetaHTML(data) {
+    // Updated ranges for title length and meta description length
+    const titleLengthClass = getColorClass(data.title_analysis.length, [20, 30, 60, 75]);
+    const metaDescLengthClass = getColorClass(data.meta_description ? data.meta_description.length : 0, [120, 150, 160, 195]);
+
+    const ogImageClass = data.open_graph_tags.length > 0 ? 'good' : 'poor';
+    const twitterMetaTagsClass = data.twitter_tags.length > 0 ? 'good' : 'poor';
+
+    const titleExplanation = "The ideal title length is between 30 and 60 characters.";
+    const metaDescExplanation = "The ideal meta description length is between 150 and 160 characters.";
+
+    // Conditional logic for positive or negative header
+    const isPositive = data.title_analysis.length > 0 && data.meta_description && data.open_graph_tags.length > 0;
+    const headerClass = isPositive ? 'positive' : 'negative';
+    const headerIcon = isPositive ? '✔️' : '❌';
+
+    return `
+        <div class="seo-section">
+            <div class="analysis-result">
+                <div class="analysis-header ${headerClass}">
+                    <span class="icon">${headerIcon}</span>
+                    <span class="title">Meta HTML & SEO</span>
+                    <button class="toggle-details">▼</button>
+                </div>
+                <div class="analysis-summary">
+                    Meta tags like title, description, OG, and Twitter tags are correctly optimized.
+                </div>
+                <div class="analysis-details hidden">
+                    <p class="border-left ${titleLengthClass}">
+                        <strong>Title:</strong> ${data.title} 
+                        <span>(${data.title_analysis.length} characters)</span>
+                        <small class="help-text">${titleExplanation}</small>
+                    </p>
+                    <p class="border-left ${metaDescLengthClass}">
+                        <strong>Meta Description:</strong> ${data.meta_description || 'No meta description found'} 
+                        <span>(${data.meta_description ? data.meta_description.length : 0} characters)</span>
+                        <small class="help-text">${metaDescExplanation}</small>
+                    </p>
+                    <p class="border-left ${ogImageClass}">
+                        <strong>OG Image:</strong> ${data.open_graph_tags.length > 0 ? 'Present' : 'Not found'}
+                        <small class="help-text">Open Graph image is important for social media sharing.</small>
+                    </p>
+                    <p class="border-left ${twitterMetaTagsClass}">
+                        <strong>Twitter Meta Tags:</strong> ${data.twitter_tags.length > 0 ? 'Present' : 'Not found'}
+                        <small class="help-text">Twitter meta tags help ensure proper display when shared on Twitter.</small>
+                    </p>
+                    <a href="#" class="learn-more">Learn More</a>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+
+// Titles & Headings Section (combined)
+function generateTitleAndHeadingsHTML(data) {
     const keywordColorClass = data.title_analysis.containsKeyword ? 'good' : 'poor';
-
     return `
         <div class="seo-section">
-            <h3>Title Analysis</h3>
-            <div class="metric">
-                <h4><i class="fas fa-heading"></i> Title</h4>
-                <p>${data.title}</p>
-                <p class="${titleColorClass}">Length: ${data.title_analysis.length} characters</p>
-                <p class="${keywordColorClass}">Contains Keyword: ${data.title_analysis.containsKeyword ? 'Yes' : 'No'}</p>
-                ${data.title_analysis.containsKeyword ? `<p>Keyword Position: ${data.title_analysis.keywordPosition}</p>` : ''}
-                <small>Ideal title length is between 50-60 characters. Include the main keyword near the beginning.</small>
+            <div class="analysis-result">
+                <div class="analysis-header ${data.title_analysis.containsKeyword ? 'positive' : 'negative'}">
+                    <span class="icon">${data.title_analysis.containsKeyword ? '✔️' : '❌'}</span>
+                    <span class="title">Titles & Headings</span>
+                    <button class="toggle-details">▼</button>
+                </div>
+                <div class="analysis-summary">
+                    ${data.title_analysis.containsKeyword ? 'Your title and headings are optimized with the keyword.' : 'Keyword is missing in titles or headings.'}
+                </div>
+                <div class="analysis-details hidden">
+                    <p>Page Title (H1): ${data.title}</p>
+                    <p>Contains Keyword: ${data.title_analysis.containsKeyword ? 'Yes' : 'No'}</p>
+                    ${generateHeadingsForType(data.heading_analysis.h1, 'H1')}
+                    ${generateHeadingsForType(data.heading_analysis.h2, 'H2')}
+                    ${generateHeadingsForType(data.heading_analysis.h3, 'H3')}
+                    <a href="#" class="learn-more">Learn More</a>
+                </div>
             </div>
         </div>
     `;
 }
 
-function generateMetaDescriptionHTML(data) {
-    const descriptionLength = data.meta_description ? data.meta_description.length : 0;
-    const descriptionColorClass = getColorClass(descriptionLength, [50, 150]);
+function generateHeadingsForType(headingData, type) {
+    const headingColorClass = getColorClass(headingData.withKeyword, [0, 1]);
+    return `
+        <div class="metric">
+            <h4>${type} Headings</h4>
+            <p>Count: ${headingData.count}</p>
+            <p class="${headingColorClass}">With Keyword: ${headingData.withKeyword}</p>
+            <p>Average Length: ${headingData.averageLength.toFixed(2)} characters</p>
+        </div>
+    `;
+}
 
+// Content & Links Section (combined)
+function generateContentAndLinksHTML(data, keywordDensityInfo, readabilityInfo, internalLinksInfo, externalLinksInfo) {
     return `
         <div class="seo-section">
-            <h3>Meta Description</h3>
-            <div class="metric">
-                <h4><i class="fas fa-align-left"></i> Meta Description</h4>
-                <p>${data.meta_description || 'No meta description found'}</p>
-                <p class="${descriptionColorClass}">Length: ${descriptionLength} characters</p>
-                <small>Ideal meta description length is between 150-160 characters.</small>
+            <div class="analysis-result">
+                <div class="analysis-header positive">
+                    <span class="icon">✔️</span>
+                    <span class="title">Content & Links</span>
+                    <button class="toggle-details">▼</button>
+                </div>
+                <div class="analysis-summary">
+                    Content and links are properly optimized with keyword density and readability.
+                </div>
+                <div class="analysis-details hidden">
+                    <p>Keyword Density: ${data.keyword_density}% (${keywordDensityInfo.explanation})</p>
+                    <p>Readability Score: ${data.readability_score} (${readabilityInfo.explanation})</p>
+                    <p>Internal Links: ${data.internal_links} (${internalLinksInfo.explanation})</p>
+                    <p>External Links: ${data.external_links} (${externalLinksInfo.explanation})</p>
+                    <a href="#" class="learn-more">Learn More</a>
+                </div>
             </div>
         </div>
     `;
 }
 
-function generateHeadingAnalysisHTML(data) {
-    const headingTypes = ['h1', 'h2', 'h3'];
-    let headingHTML = '';
-
-    headingTypes.forEach(type => {
-        const headingData = data.heading_analysis[type];
-        const headingColorClass = getColorClass(headingData.withKeyword, [0, 1]);
-
-        headingHTML += `
-            <div class="metric">
-                <h4><i class="fas fa-heading"></i> ${type.toUpperCase()} Headings</h4>
-                <p>Count: ${headingData.count}</p>
-                <p class="${headingColorClass}">With Keyword: ${headingData.withKeyword}</p>
-                <p>Average Length: ${headingData.averageLength.toFixed(2)} characters</p>
-                <small>${type === 'h1' ? 'Use only one H1 tag per page.' : `Use ${type} tags to structure your content.`}</small>
-            </div>
-        `;
-    });
-
+// Breadcrumbs Section
+function generateBreadcrumbsHTML(data) {
+    const colorClass = data.breadcrumbs ? 'good' : 'poor';
     return `
         <div class="seo-section">
-            <h3>Heading Analysis</h3>
-            ${headingHTML}
-        </div>
-    `;
-}
-
-function generateContentAnalysisHTML(data, keywordDensityInfo, readabilityInfo) {
-    return `
-        <div class="seo-section">
-            <h3>Content Analysis</h3>
-            <div class="metric">
-                <h4><i class="fas fa-file-alt"></i> Content Overview</h4>
-                <p>Word Count: ${data.content_analysis.wordCount}</p>
-                <p class="${keywordDensityInfo.colorClass}">Keyword Density: ${data.keyword_density}%</p>
-                <small>${keywordDensityInfo.explanation}</small>
-            </div>
-            <div class="metric">
-                <h4><i class="fas fa-book-reader"></i> Readability</h4>
-                <p class="${readabilityInfo.colorClass}">Score: ${data.readability_score}</p>
-                <small>${readabilityInfo.explanation}</small>
+            <div class="analysis-result">
+                <div class="analysis-header ${data.breadcrumbs ? 'positive' : 'negative'}">
+                    <span class="icon">${data.breadcrumbs ? '✔️' : '❌'}</span>
+                    <span class="title">Breadcrumbs</span>
+                    <button class="toggle-details">▼</button>
+                </div>
+                <div class="analysis-summary">
+                    ${data.breadcrumbs ? 'Breadcrumbs are properly implemented.' : 'Breadcrumbs are missing.'}
+                </div>
+                <div class="analysis-details hidden">
+                    <p>Breadcrumbs help users and search engines navigate your site structure effectively.</p>
+                    <a href="#" class="learn-more">Learn More</a>
+                </div>
             </div>
         </div>
     `;
 }
 
-function generateLinkAnalysisHTML(data, internalLinksInfo, externalLinksInfo) {
-    return `
-        <div class="seo-section">
-            <h3>Link Analysis</h3>
-            <div class="metric">
-                <h4><i class="fas fa-link"></i> Internal Links</h4>
-                <p class="${internalLinksInfo.colorClass}">Count: ${data.internal_links}</p>
-                <small>${internalLinksInfo.explanation}</small>
-            </div>
-            <div class="metric">
-                <h4><i class="fas fa-external-link-alt"></i> External Links</h4>
-                <p class="${externalLinksInfo.colorClass}">Count: ${data.external_links}</p>
-                <small>${externalLinksInfo.explanation}</small>
-            </div>
-        </div>
-    `;
-}
-
-function generateMetaSEOAnalysisHTML(data) {
-    return `
-        <div class="seo-section">
-            <h3>Meta SEO Analysis</h3>
-            ${generateOpenGraphTagsHTML(data.open_graph_tags)}
-            ${generateTwitterTagsHTML(data.twitter_tags)}
-            ${generateCanonicalURLHTML(data.canonical_url)}
-            ${generateRobotsMetaHTML(data.robots_meta)}
-        </div>
-    `;
-}
-
-function generateOpenGraphTagsHTML(openGraphTags) {
-    const tags = openGraphTags.map(tag => `<li>${tag.name}: ${tag.content}</li>`).join('');
-    return `
-        <div class="metric">
-            <h4><i class="fab fa-facebook"></i> Open Graph Tags</h4>
-            ${tags ? `<ul>${tags}</ul>` : '<p>No Open Graph tags found</p>'}
-            <small>Open Graph tags help control how your content appears when shared on social media.</small>
-        </div>
-    `;
-}
-
-function generateTwitterTagsHTML(twitterTags) {
-    const tags = twitterTags.map(tag => `<li>${tag.name}: ${tag.content}</li>`).join('');
-    return `
-        <div class="metric">
-            <h4><i class="fab fa-twitter"></i> Twitter Cards</h4>
-            ${tags ? `<ul>${tags}</ul>` : '<p>No Twitter Card tags found</p>'}
-            <small>Twitter Card tags control how your content appears when shared on Twitter.</small>
-        </div>
-    `;
-}
-
-function generateCanonicalURLHTML(canonicalUrl) {
-    return `
-        <div class="metric">
-            <h4><i class="fas fa-link"></i> Canonical URL</h4>
-            <p>${canonicalUrl || 'No canonical URL found'}</p>
-            <small>The canonical URL helps prevent duplicate content issues.</small>
-        </div>
-    `;
-}
-
-function generateRobotsMetaHTML(robotsMeta) {
-    return `
-        <div class="metric">
-            <h4><i class="fas fa-robot"></i> Robots Meta Tag</h4>
-            <p>${robotsMeta || 'No robots meta tag found'}</p>
-            <small>The robots meta tag controls how search engines crawl and index your page.</small>
-        </div>
-    `;
-}
-
-function generateNewContentAnalysisHTML(data) {
-    return `
-        <div class="seo-section">
-            <h3>Additional Content Analysis</h3>
-            ${generateBreadcrumbsHTML(data.breadcrumbs)}
-            ${generateKeywordInIntroductionHTML(data.keyword_in_introduction)}
-            ${generateInternalLinksCountHTML(data.internal_links_count)}
-            ${generateOutboundLinksCountHTML(data.outbound_links_count)}
-            ${generateSchemaPresenceHTML(data.schema_presence)}
-        </div>
-    `;
-}
-
-function generateBreadcrumbsHTML(breadcrumbs) {
-    const colorClass = breadcrumbs ? 'good' : 'poor';
-    return `
-        <div class="metric">
-            <h4><i class="fas fa-bread-slice"></i> Breadcrumbs</h4>
-            <p class="${colorClass}">${breadcrumbs ? 'Present' : 'Not found'}</p>
-            <small>Breadcrumbs help users and search engines understand the site structure.</small>
-        </div>
-    `;
-}
-
-function generateKeywordInIntroductionHTML(keywordInIntro) {
-    const colorClass = keywordInIntro ? 'good' : 'poor';
-    return `
-        <div class="metric">
-            <h4><i class="fas fa-paragraph"></i> Keyword in Introduction</h4>
-            <p class="${colorClass}">${keywordInIntro ? 'Present' : 'Not found'}</p>
-            <small>Including the main keyword early in the content helps establish relevance.</small>
-        </div>
-    `;
-}
-
-function generateInternalLinksCountHTML(internalLinksCount) {
-    const colorClass = getColorClass(internalLinksCount, [2, 5]);
-    return `
-        <div class="metric">
-            <h4><i class="fas fa-project-diagram"></i> Internal Links Count</h4>
-            <p class="${colorClass}">${internalLinksCount}</p>
-            <small>Internal links help distribute page authority and guide users through your site.</small>
-        </div>
-    `;
-}
-
-function generateOutboundLinksCountHTML(outboundLinksCount) {
-    const colorClass = getColorClass(outboundLinksCount, [1, 3]);
-    return `
-        <div class="metric">
-            <h4><i class="fas fa-external-link-alt"></i> Outbound Links Count</h4>
-            <p class="${colorClass}">${outboundLinksCount}</p>
-            <small>Outbound links to authoritative sources can boost your content's credibility.</small>
-        </div>
-    `;
-}
-
-function generateSchemaPresenceHTML(schemaPresence) {
-    const colorClass = schemaPresence ? 'good' : 'poor';
-    return `
-        <div class="metric">
-            <h4><i class="fas fa-code"></i> Schema Markup</h4>
-            <p class="${colorClass}">${schemaPresence ? 'Present' : 'Not found'}</p>
-            <small>Schema markup helps search engines understand your content better.</small>
-        </div>
-    `;
-}
-
+// Slug Analysis Section
 function generateSlugAnalysisHTML(data) {
     const slugAnalysis = data.slug_analysis;
     const slugColorClass = getColorClass(slugAnalysis.isReadable && slugAnalysis.containsKeyword ? 100 : 0, [50, 80]);
 
     return `
         <div class="seo-section">
-            <h3>Slug Analysis</h3>
-            <div class="metric">
-                <h4><i class="fas fa-link"></i> URL Slug</h4>
-                <p>Slug: ${slugAnalysis.slug || 'No slug found'}</p>
-                <p>Length: ${slugAnalysis.length} characters</p>
-                <p class="${slugAnalysis.containsKeyword ? 'good' : 'poor'}">
-                    Contains Keyword: ${slugAnalysis.containsKeyword ? 'Yes' : 'No'}
-                </p>
-                <p class="${slugAnalysis.isReadable ? 'good' : 'poor'}">
-                    Readable: ${slugAnalysis.isReadable ? 'Yes' : 'No'}
-                </p>
-                <p class="${slugAnalysis.hasDashes ? 'good' : 'moderate'}">
-                    Uses Hyphens: ${slugAnalysis.hasDashes ? 'Yes' : 'No'}
-                </p>
-                <p class="${slugAnalysis.hasUnderscores ? 'poor' : 'good'}">
-                    Uses Underscores: ${slugAnalysis.hasUnderscores ? 'Yes' : 'No'}
-                </p>
-                <p class="${slugAnalysis.hasNumbers ? 'moderate' : 'good'}">
-                    Contains Numbers: ${slugAnalysis.hasNumbers ? 'Yes' : 'No'}
-                </p>
-                <p class="${slugColorClass}">Recommendation: ${slugAnalysis.recommendation}</p>
-                <small>A well-optimized slug is short, readable, and contains the main keyword.</small>
+            <div class="analysis-result">
+                <div class="analysis-header ${slugAnalysis.isReadable && slugAnalysis.containsKeyword ? 'positive' : 'negative'}">
+                    <span class="icon">${slugAnalysis.isReadable && slugAnalysis.containsKeyword ? '✔️' : '❌'}</span>
+                    <span class="title">Slug Analysis</span>
+                    <button class="toggle-details">▼</button>
+                </div>
+                <div class="analysis-summary">
+                    ${slugAnalysis.isReadable ? 'The URL slug is readable and optimized.' : 'The URL slug needs improvement.'}
+                </div>
+                <div class="analysis-details hidden">
+                    <p>Slug: ${slugAnalysis.slug || 'No slug found'}</p>
+                    <p>Contains Keyword: ${slugAnalysis.containsKeyword ? 'Yes' : 'No'}</p>
+                    <p>Readable: ${slugAnalysis.isReadable ? 'Yes' : 'No'}</p>
+                    <p>Uses Hyphens: ${slugAnalysis.hasDashes ? 'Yes' : 'No'}</p>
+                    <p>Contains Numbers: ${slugAnalysis.hasNumbers ? 'Yes' : 'No'}</p>
+                    <a href="#" class="learn-more">Learn More</a>
+                </div>
             </div>
         </div>
     `;

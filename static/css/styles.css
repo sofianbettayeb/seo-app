@@ -127,7 +127,7 @@ button:active {
 }
 
 .overall-score {
-    text-align: center;
+    text-align: left; /* Left align the title and score */
     padding: 2rem;
     border-radius: 8px;
     margin-bottom: 2rem;
@@ -136,6 +136,46 @@ button:active {
 .overall-score h3 {
     font-size: 3rem;
     margin-bottom: 0.5rem;
+}
+
+/* Align the score, title, and arrow on one line */
+.analysis-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.8rem;
+    cursor: pointer;
+}
+
+.analysis-header .icon {
+    font-size: 1.2rem;
+}
+
+.analysis-header .title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    flex-grow: 1;
+    padding-left: 0.5rem;
+    text-align: left;
+}
+
+.score-display {
+    font-weight: bold;
+    color: #ffffff;
+    margin-left: 1rem;
+}
+
+.analysis-header .toggle-details {
+    background: none;
+    border: none;
+    color: #ffffff;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.toggle-details.open {
+    transform: rotate(180deg);
 }
 
 .seo-section {
@@ -181,18 +221,46 @@ button:active {
 .moderate { color: #f39c12; }
 .good { color: #2ecc71; }
 
+.analysis-summary {
+    color: #a0a0a0;
+    padding-left: 2rem;
+}
+
+/* Collapsible details */
+.analysis-details {
+    padding: 1rem;
+    background-color: #353535;
+    border-radius: 4px;
+    margin-top: 0.8rem;
+    color: #ffffff;
+}
+
+.hidden {
+    display: none;
+}
+
+.learn-more {
+    color: #3498db;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.learn-more:hover {
+    text-decoration: underline;
+}
+
 /* Responsive styles */
 @media (min-width: 768px) {
     .input-container {
         flex-direction: row;
         flex-wrap: wrap;
     }
-    
+
     .input-wrapper {
         flex: 1 1 calc(50% - 0.5rem);
         min-width: 200px;
     }
-    
+
     button {
         flex: 1 1 auto;
         min-width: 150px;
@@ -249,4 +317,38 @@ button:active {
     input[type="text"], button {
         font-size: 0.8rem;
     }
+}
+
+.border-left {
+    padding-left: 10px; /* Ensures padding between the text and the border */
+    border-left-width: 4px;
+    border-left-style: solid;
+    border-left-color: transparent; /* Default: no border */
+    margin-bottom: 0.5rem; /* Add some space between items */
+}
+
+/* Visual indicators for good, moderate, and poor */
+.good {
+    border-left-color: #2ecc71; /* Green for optimal results */
+}
+
+.moderate {
+    border-left-color: #f39c12; /* Yellow for acceptable but improvable results */
+}
+
+.poor {
+    border-left-color: #e74c3c; /* Red for missing or incorrect results */
+}
+
+/* Ensure all text remains white */
+p, strong, span {
+    color: #ffffff; /* White text */
+}
+
+/* Help text style */
+.help-text {
+    display: block;
+    color: #a0a0a0;  /* Grey color for help text */
+    font-size: 0.9rem;
+    margin-top: 0.2rem;
 }
