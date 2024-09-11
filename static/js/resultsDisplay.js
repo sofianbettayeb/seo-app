@@ -139,20 +139,30 @@ function generateMetaHTML(data) {
 // Titles & Headings Section (combined)
 function generateTitleAndHeadingsHTML(data) {
     const keywordColorClass = data.title_analysis.containsKeyword ? 'good' : 'poor';
+    const isPositive = data.title_analysis.containsKeyword;
+    const headerClass = isPositive ? 'positive' : 'negative';
+    const headerIcon = isPositive ? '✔️' : '❌';
+
+    const keywordExplanation = isPositive
+        ? "Your title and headings are optimized with the keyword."
+        : "The keyword is missing from the title or headings.";
+
     return `
         <div class="seo-section">
             <div class="analysis-result">
-                <div class="analysis-header ${data.title_analysis.containsKeyword ? 'positive' : 'negative'}">
-                    <span class="icon">${data.title_analysis.containsKeyword ? '✔️' : '❌'}</span>
+                <div class="analysis-header ${headerClass}">
+                    <span class="icon">${headerIcon}</span>
                     <span class="title">Titles & Headings</span>
                     <button class="toggle-details">▼</button>
                 </div>
                 <div class="analysis-summary">
-                    ${data.title_analysis.containsKeyword ? 'Your title and headings are optimized with the keyword.' : 'Keyword is missing in titles or headings.'}
+                    ${keywordExplanation}
                 </div>
                 <div class="analysis-details hidden">
-                    <p>Page Title (H1): ${data.title}</p>
-                    <p>Contains Keyword: ${data.title_analysis.containsKeyword ? 'Yes' : 'No'}</p>
+                    <p class="border-left ${keywordColorClass}">
+                        <strong>Page Title (H1):</strong> ${data.title}
+                        <span>Contains Keyword: ${data.title_analysis.containsKeyword ? 'Yes' : 'No'}</span>
+                    </p>
                     ${generateHeadingsForType(data.heading_analysis.h1, 'H1')}
                     ${generateHeadingsForType(data.heading_analysis.h2, 'H2')}
                     ${generateHeadingsForType(data.heading_analysis.h3, 'H3')}
@@ -163,15 +173,18 @@ function generateTitleAndHeadingsHTML(data) {
     `;
 }
 
+// Helper function to generate headings (H1, H2, H3)
 function generateHeadingsForType(headingData, type) {
-    const headingColorClass = getColorClass(headingData.withKeyword, [0, 1]);
+    const headingColorClass = getColorClass(headingData.withKeyword, [0, 1]); // Green if keyword present, otherwise red
+    const headingExplanation = headingData.withKeyword 
+        ? `The keyword is present in ${type} headings.` 
+        : `The keyword is missing in ${type} headings.`;
+
     return `
-        <div class="metric">
-            <h4>${type} Headings</h4>
-            <p>Count: ${headingData.count}</p>
-            <p class="${headingColorClass}">With Keyword: ${headingData.withKeyword}</p>
-            <p>Average Length: ${headingData.averageLength.toFixed(2)} characters</p>
-        </div>
+        <p class="border-left ${headingColorClass}">
+            <strong>${type} Headings:</strong> Count: ${headingData.count}, Keyword: ${headingData.withKeyword ? 'Yes' : 'No'}
+            <small class="help-text">${headingExplanation}</small>
+        </p>
     `;
 }
 
