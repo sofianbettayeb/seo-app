@@ -327,17 +327,23 @@ button:active {
     margin-bottom: 0.5rem; /* Add some space between items */
 }
 
-/* Visual indicators for good, moderate, and poor */
+/* Colors */
 .good {
-    border-left-color: #2ecc71; /* Green for optimal results */
+    border-left-color: #2ecc71; /* Green */
 }
-
+.excellent {
+    border-left-color: #0040ff; /* blue */
+}
 .moderate {
-    border-left-color: #f39c12; /* Yellow for acceptable but improvable results */
+    border-left-color: #f39c12; /* Orange */
+}
+.poor {
+    border-left-color: #e74c3c; /* Red */
 }
 
-.poor {
-    border-left-color: #e74c3c; /* Red for missing or incorrect results */
+.neutral {
+    color: #ffffff; /* White text */
+    border-left: none; /* No border */
 }
 
 /* Ensure all text remains white */
@@ -369,3 +375,38 @@ p, strong, span {
     font-weight: normal;
     color: #ffffff; /* White text for headings */
 }
+
+.score-circle {
+width: 150px;
+height: 150px;
+margin: 0 auto;
+position: relative;
+}
+
+.circular-chart {
+display: block;
+margin: 10px auto;
+max-width: 100%;
+max-height: 250px;
+}
+
+.circle {
+fill: none;
+stroke-width: 3.8;
+stroke-linecap: round;
+animation: progress 1s ease-out forwards;
+}
+
+.percentage {
+fill: #ffffff;
+font-family: sans-serif;
+font-size: 0.5em;
+text-anchor: middle;
+dominant-baseline: central;
+}
+
+.circular-chart.poor .circle { stroke: #ff4e42; }
+.circular-chart.moderate .circle { stroke: #f4cd0b; }
+.circular-chart.average .circle { stroke: #ff9500; }
+.circular-chart.good .circle { stroke: #0cce6b; }
+.circular-chart.excellent .circle { stroke: #0040ff; }

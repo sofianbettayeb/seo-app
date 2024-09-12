@@ -33,6 +33,11 @@ function initCollapsibleSections() {
     });
 }
 
+function getTitleColorClass(value) {
+    if (value < 20 || value > 75) return "poor"; // Red for too short or too long
+    if (value >= 30 && value <= 60) return "good"; // Green for ideal length
+    return "moderate"; // Orange for in-between lengths
+}
 
 // Function to generate Title Hierarchy HTML
 function generateTitleHierarchyHTML(hierarchyAnalysis) {
@@ -86,7 +91,6 @@ function generateTitleHierarchyHTML(hierarchyAnalysis) {
     `;
 }
 
-
 // Function to calculate the overall SEO score
 function calculateOverallScore(data) {
     let score = 0;
@@ -103,45 +107,47 @@ function calculateOverallScore(data) {
     if (data.internal_links_count >= 3) score += 5;
     if (data.outbound_links_count >= 3) score += 5;
 
-    if (data.slug_analysis.isReadable) score += 3;
-    if (data.slug_analysis.containsKeyword) score += 3;
-    if (data.slug_analysis.hasDashes && !data.slug_analysis.hasUnderscores) score += 2;
-    if (!data.slug_analysis.hasNumbers) score += 2;
+    if (data.slug_analysis && data.slug_analysis.isReadable) score += 3;
+    if (data.slug_analysis && data.slug_analysis.containsKeyword) score += 3;
+    if (data.slug_analysis && data.slug_analysis.hasDashes && !data.slug_analysis.hasUnderscores) score += 2;
+    if (data.slug_analysis && !data.slug_analysis.hasNumbers) score += 2;
 
     return Math.min(score, 100);
 }
 
 function generateOverallScoreHTML(data) {
     const overallScore = calculateOverallScore(data);
-    const scoreClass = overallScore >= 50 ? 'positive' : 'negative'; // Green if score >= 50, else Red
+    const scoreClass = getColorClass(overallScore);
 
     return `
-        <div class="seo-section overall-score ${getColorClass(overallScore, [50, 80])}">
-            <div class="analysis-result">
-                <div class="analysis-header ${scoreClass}">
-                    <span class="icon">${overallScore >= 50 ? '✔️' : '❌'}</span>
-                    <span class="title">Overall SEO Score is: ${overallScore}/100</span>
-                    <button class="toggle-details">▼</button>
+        <div class='seo-section overall-score ${scoreClass}'>
+            <div class='analysis-result'>
+                <div class='analysis-header'>
+                    <span class='icon'>🎯</span>
+                    <span class='title'>Overall SEO Score</span>
                 </div>
-                <div class="analysis-summary">
+                <div class='score-circle'>
+                    <svg viewBox='0 0 36 36' class='circular-chart ${scoreClass}'>
+                        <path class='circle-bg' d='M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831'/>
+                        <path class='circle' stroke-dasharray='${overallScore}, 100' d='M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831'/>
+                        <text x='18' y='18' class='percentage'>${overallScore}%</text>
+                    </svg>
+                </div>
+                <div class='analysis-summary'>
                     This score is based on various SEO factors analyzed on your page.
-                </div>
-                <div class="analysis-details hidden">
-                    <p>Your overall SEO score is <strong>${overallScore}/100</strong>. It reflects the optimization level of key factors such as meta information, readability, links, and more.</p>
-                    <a href="#" class="learn-more">Learn More</a>
                 </div>
             </div>
         </div>
     `;
 }
 
-
-
 // Meta HTML + Meta SEO Section (including OG and Twitter Tags)
 function generateMetaHTML(data) {
-    // Updated ranges for title length and meta description length
-    const titleLengthClass = getColorClass(data.title_analysis.length, [20, 30, 60, 75]);
-    const metaDescLengthClass = getColorClass(data.meta_description ? data.meta_description.length : 0, [120, 150, 160, 195]);
+    const titleLength = data.title_analysis && data.title_analysis.length ? data.title_analysis.length : 0;
+    const titleLengthClass = getTitleColorClass(titleLength);
+
+    const metaDescLength = data.meta_description ? data.meta_description.length : 0;
+    const metaDescLengthClass = getColorClass(metaDescLength, [120, 150, 160, 195]);
 
     const ogImageClass = data.open_graph_tags.length > 0 ? 'good' : 'poor';
     const twitterMetaTagsClass = data.twitter_tags.length > 0 ? 'good' : 'poor';
@@ -149,8 +155,7 @@ function generateMetaHTML(data) {
     const titleExplanation = "The ideal title length is between 30 and 60 characters.";
     const metaDescExplanation = "The ideal meta description length is between 150 and 160 characters.";
 
-    // Conditional logic for positive or negative header
-    const isPositive = data.title_analysis.length > 0 && data.meta_description && data.open_graph_tags.length > 0;
+    const isPositive = titleLength > 0 && data.meta_description && data.open_graph_tags.length > 0;
     const headerClass = isPositive ? 'positive' : 'negative';
     const headerIcon = isPositive ? '✔️' : '❌';
 
@@ -168,12 +173,12 @@ function generateMetaHTML(data) {
                 <div class="analysis-details hidden">
                     <p class="border-left ${titleLengthClass}">
                         <strong>Title:</strong> ${data.title} 
-                        <span>(${data.title_analysis.length} characters)</span>
+                        <span>(${titleLength} characters)</span>
                         <small class="help-text">${titleExplanation}</small>
                     </p>
                     <p class="border-left ${metaDescLengthClass}">
                         <strong>Meta Description:</strong> ${data.meta_description || 'No meta description found'} 
-                        <span>(${data.meta_description ? data.meta_description.length : 0} characters)</span>
+                        <span>(${metaDescLength} characters)</span>
                         <small class="help-text">${metaDescExplanation}</small>
                     </p>
                     <p class="border-left ${ogImageClass}">
@@ -190,7 +195,6 @@ function generateMetaHTML(data) {
         </div>
     `;
 }
-
 
 // Titles & Headings Section (combined)
 function generateTitleAndHeadingsHTML(data) {
@@ -231,10 +235,18 @@ function generateTitleAndHeadingsHTML(data) {
 
 // Helper function to generate headings (H1, H2, H3)
 function generateHeadingsForType(headingData, type) {
-    const headingColorClass = getColorClass(headingData.withKeyword, [0, 1]); // Green if keyword present, otherwise red
-    const headingExplanation = headingData.withKeyword 
-        ? `The keyword is present in ${type} headings.` 
-        : `The keyword is missing in ${type} headings.`;
+    let headingColorClass;
+    let headingExplanation;
+
+    if (type === 'H1' && headingData.count > 1) {
+        headingColorClass = 'poor'; // Red border for more than 1 H1
+        headingExplanation = 'Only one H1 should be present on a page.';
+    } else {
+        headingColorClass = getColorClass(headingData.withKeyword, [0, 1]); // Green if keyword present, otherwise red
+        headingExplanation = headingData.withKeyword 
+            ? `The keyword is present in ${type} headings.` 
+            : `The keyword is missing in ${type} headings.`;
+    }
 
     return `
         <p class="border-left ${headingColorClass}">
@@ -244,34 +256,36 @@ function generateHeadingsForType(headingData, type) {
     `;
 }
 
-
 // Content & Links Section (combined)
+function getExternalLinkClass(externalLinks) {
+    if (externalLinks < 5) return 'poor';
+    if (externalLinks >= 5 && externalLinks <= 10) return 'good';
+    if (externalLinks > 15) return 'excellent';
+    return 'moderate'; // Default for any other case
+}
+
 function generateContentAndLinksHTML(data, keywordDensityInfo, readabilityInfo, internalLinksInfo, externalLinksInfo) {
-    // Determine if the content and links are optimized (positive or negative header)
-    const isContentOptimized = data.keyword_density > 0 && data.readability_score >= 60 && data.internal_links > 0 && data.external_links > 0;
-    const headerClass = isContentOptimized ? 'positive' : 'negative';
-    const headerIcon = isContentOptimized ? '✔️' : '❌';
-    const summaryText = isContentOptimized 
-        ? "Content and links are properly optimized with keyword density and readability." 
-        : "Content or links are not properly optimized.";
+    // Calculate readability score color class using the same function as overall score
+    const readabilityScoreClass = getColorClass(data.readability_score);
+    const externalLinkClass = getExternalLinkClass(data.external_links);
 
     return `
         <div class="seo-section">
             <div class="analysis-result">
-                <div class="analysis-header ${headerClass}">
-                    <span class="icon">${headerIcon}</span>
+                <div class="analysis-header positive">
+                    <span class="icon">✔️</span>
                     <span class="title">Content & Links</span>
                     <button class="toggle-details">▼</button>
                 </div>
                 <div class="analysis-summary">
-                    ${summaryText}
+                    Content and links are properly optimized with keyword density and readability.
                 </div>
                 <div class="analysis-details hidden">
                     <p class="border-left ${keywordDensityInfo.colorClass}">
                         <strong>Keyword Density:</strong> ${data.keyword_density}% 
                         <small class="help-text">${keywordDensityInfo.explanation}</small>
                     </p>
-                    <p class="border-left ${readabilityInfo.colorClass}">
+                    <p class="border-left ${readabilityScoreClass}">
                         <strong>Readability Score:</strong> ${data.readability_score} 
                         <small class="help-text">${readabilityInfo.explanation}</small>
                     </p>
@@ -279,7 +293,7 @@ function generateContentAndLinksHTML(data, keywordDensityInfo, readabilityInfo, 
                         <strong>Internal Links:</strong> ${data.internal_links} 
                         <small class="help-text">${internalLinksInfo.explanation}</small>
                     </p>
-                    <p class="border-left ${externalLinksInfo.colorClass}">
+                    <p class="border-left ${externalLinkClass}">
                         <strong>External Links:</strong> ${data.external_links} 
                         <small class="help-text">${externalLinksInfo.explanation}</small>
                     </p>
@@ -328,6 +342,11 @@ function generateBreadcrumbsHTML(data) {
 // Slug Analysis Section
 function generateSlugAnalysisHTML(data) {
     const slugAnalysis = data.slug_analysis;
+
+    if (!slugAnalysis || !slugAnalysis.slug) {
+        return ''; // Skip the slug analysis if no slug is found
+    }
+
     const isSlugOptimized = slugAnalysis.isReadable && slugAnalysis.containsKeyword;
     const slugColorClass = getColorClass(isSlugOptimized ? 100 : 0, [50, 80]);
 
@@ -336,6 +355,28 @@ function generateSlugAnalysisHTML(data) {
     const summaryText = isSlugOptimized
         ? 'The URL slug is readable and optimized.'
         : 'The URL slug needs improvement.';
+
+    // Logic to check for hyphens and underscores
+    const hasHyphens = slugAnalysis.hasDashes;
+    const hasUnderscores = slugAnalysis.hasUnderscores;
+    let hyphenStatus = "No";
+    let hyphenHelpText = "Use hyphens (-) in slugs instead of underscores (_).";
+    let hyphenClass = "poor"; // Default to red border and color
+
+    // Update messages based on presence of hyphens or underscores
+    if (!hasHyphens && !hasUnderscores) {
+        hyphenStatus = "Neither hyphens nor underscores found";
+        hyphenHelpText = "Use hyphens (-) in slugs to separate words.";
+        hyphenClass = "neutral"; // Apply neutral class for no border and white text
+    } else if (hasHyphens && !hasUnderscores) {
+        hyphenStatus = "Yes";
+        hyphenHelpText = "Hyphens are used correctly.";
+        hyphenClass = "good"; // Green if hyphens are correctly used
+    } else if (!hasHyphens && hasUnderscores) {
+        hyphenStatus = "No";
+        hyphenHelpText = "Use hyphens (-) instead of underscores (_).";
+        hyphenClass = "poor"; // Red if underscores are present
+    }
 
     return `
         <div class="seo-section">
@@ -360,12 +401,12 @@ function generateSlugAnalysisHTML(data) {
                         <strong>Readable:</strong> ${slugAnalysis.isReadable ? 'Yes' : 'No'}
                         <small class="help-text">A readable slug is short, simple, and easy to understand.</small>
                     </p>
-                    <p class="border-left ${slugAnalysis.hasDashes ? 'good' : 'poor'}">
-                        <strong>Uses Hyphens:</strong> ${slugAnalysis.hasDashes ? 'Yes' : 'No'}
-                        <small class="help-text">Use hyphens (-) in slugs instead of underscores (_).</small>
+                    <p class="${hyphenClass}">
+                        <strong>Uses Hyphens:</strong> ${hyphenStatus}
+                        <small class="help-text">${hyphenHelpText}</small>
                     </p>
                     <p class="border-left ${!slugAnalysis.hasNumbers ? 'good' : 'poor'}">
-                        <strong>Don't Contains Numbers:</strong> ${slugAnalysis.hasNumbers ? 'No' : 'Yes'}
+                        <strong>Contains Numbers:</strong> ${slugAnalysis.hasNumbers ? 'Yes' : 'No'}
                         <small class="help-text">Avoid using numbers in slugs unless they are necessary.</small>
                     </p>
                     <a href="#" class="learn-more">Learn More</a>
