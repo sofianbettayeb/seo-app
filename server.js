@@ -110,6 +110,10 @@ app.post("/analyze", async (req, res) => {
     const slugAnalysis = analyzeSlug(url, keyword);
 
     const titleHierarchyAnalysis = analyzeTitleHierarchy($);
+    
+   
+// SEO Images analysis
+    const seoImages = analyzeImages($);
 
     res.json({
       title,
@@ -136,6 +140,7 @@ app.post("/analyze", async (req, res) => {
       schema_presence: schemaPresence,
       slug_analysis: slugAnalysis,
       title_hierarchy_analysis: titleHierarchyAnalysis,
+      seo_images: seoImages, 
     });
   } catch (error) {
     res
@@ -175,6 +180,34 @@ function analyzeTitleHierarchy($) {
     hierarchyIssues,
   };
 }
+
+// Function for SEO image analysis
+function analyzeImages($) {
+  const images = $("img");
+  const result = [];
+  images.each((i, img) => {
+    const src = $(img).attr("src");
+    const alt = $(img).attr("alt") || "";
+    const width = $(img).attr("width") || "unknown";
+    const height = $(img).attr("height") || "unknown";
+    const format = src.split('.').pop().toLowerCase(); // Get image format
+    const webOptimized = ["webp", "avif", "svg"].includes(format);
+
+    result.push({
+      src,
+      alt,
+      hasAlt: alt.length > 0,
+      width,
+      height,
+      format,
+      webOptimized,
+    });
+  });
+  return result;
+}
+
+
+
 
 function calculateKeywordDensity(html, keyword) {
   const text = cheerio.load(html).text().toLowerCase();

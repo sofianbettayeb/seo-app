@@ -15,6 +15,7 @@ function displayResults(data) {
         ${generateContentAndLinksHTML(data, keywordDensityInfo, readabilityInfo, internalLinksInfo, externalLinksInfo)}
         ${generateBreadcrumbsHTML(data)}
         ${generateSlugAnalysisHTML(data)}
+        ${generateImagesHTML(data.seo_images)}
     `;
 
     // Initialize collapsible sections
@@ -367,6 +368,49 @@ function generateSlugAnalysisHTML(data) {
                         <strong>Don't Contains Numbers:</strong> ${slugAnalysis.hasNumbers ? 'No' : 'Yes'}
                         <small class="help-text">Avoid using numbers in slugs unless they are necessary.</small>
                     </p>
+                    <a href="#" class="learn-more">Learn More</a>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Function to generate SEO Images HTML
+function generateImagesHTML(images) {
+    const issues = images.filter(img => !img.hasAlt || !img.webOptimized).length > 0;
+    const headerClass = issues ? 'negative' : 'positive';
+    const headerIcon = issues ? '❌' : '✔️';
+
+    const imagesHTML = images.map(image => {
+        const formatDisplay = image.webOptimized ? `${image.format} (web-optimized)` : image.format;
+        const altTextDisplay = image.alt ? image.alt : 'No alt text';
+        const altBorderClass = image.hasAlt ? 'good' : 'poor'; // Alt text border based on its presence
+        const formatBorderClass = image.webOptimized ? 'good' : 'poor'; // Format border based on web optimization
+
+        return `
+            <p><strong>Image Source:</strong> ${image.src}</p>
+            <p class="border-left ${altBorderClass}">
+                <strong>Alt Text:</strong> ${altTextDisplay}
+            </p>
+            <p class="border-left ${formatBorderClass}">
+                <strong>Format:</strong> ${formatDisplay}
+            </p>
+        `;
+    }).join('');
+
+    return `
+        <div class="seo-section">
+            <div class="analysis-result">
+                <div class="analysis-header ${headerClass}">
+                    <span class="icon">${headerIcon}</span>
+                    <span class="title">SEO Images</span>
+                    <button class="toggle-details">▼</button>
+                </div>
+                <div class="analysis-summary">
+                    Checks if images have alt text and use web formats.
+                </div>
+                <div class="analysis-details hidden">
+                    ${imagesHTML}
                     <a href="#" class="learn-more">Learn More</a>
                 </div>
             </div>
