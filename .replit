@@ -1,5 +1,5 @@
 modules = ["python-3.11", "nodejs-20"]
-run = "node index.js"
+run = "node server.js"
 
 [nix]
 channel = "stable-24_05"

@@ -392,7 +392,7 @@ max-height: 250px;
 
 .circle {
 fill: none;
-stroke-width: 3.8;
+stroke-width: 1.8;
 stroke-linecap: round;
 animation: progress 1s ease-out forwards;
 }
